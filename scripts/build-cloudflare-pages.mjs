@@ -16,7 +16,7 @@ const botPowerAnimations = {
 };
 
 const duplicateAnimationPattern =
-  /_weapon_|pulse_rifle_attack|flame_blaster_attack|arc_pistols_attack|repair_staff_cast|heavy_cannon_attack|plasma_claws_attack|gravity_hammer_attack/;
+  /_weapon(?=\.|_)|pulse_rifle_attack|flame_blaster_attack|arc_pistols_attack|repair_staff_cast|heavy_cannon_attack|plasma_claws_attack|gravity_hammer_attack/;
 
 async function copyIfExists(source, target) {
   if (!existsSync(source)) {
@@ -37,10 +37,50 @@ async function removeDuplicateWeaponAnimations(dir) {
       continue;
     }
 
-    if (entry.name.endsWith(".fbx") && duplicateAnimationPattern.test(entry.name)) {
+    if ((entry.name.endsWith(".fbx") || entry.name.endsWith(".glb")) && duplicateAnimationPattern.test(entry.name)) {
       await rm(fullPath, { force: true });
     }
   }
+}
+
+async function removeFbxAnimations(dir) {
+  const entries = await readdir(dir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+
+    if (entry.isDirectory()) {
+      await removeFbxAnimations(fullPath);
+      continue;
+    }
+
+    if (entry.name.endsWith(".fbx") && fullPath.includes(`${path.sep}animations${path.sep}`)) {
+      await rm(fullPath, { force: true });
+    }
+  }
+}
+
+async function removeFbmFolders(dir) {
+  const entries = await readdir(dir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+
+    if (!entry.isDirectory()) {
+      continue;
+    }
+
+    if (entry.name.endsWith(".fbm")) {
+      await rm(fullPath, { recursive: true, force: true });
+      continue;
+    }
+
+    await removeFbmFolders(fullPath);
+  }
+}
+
+function animationGlb(pathValue) {
+  return pathValue.replace(/animations\/(.+)\.fbx$/u, "animations/$1.glb");
 }
 
 async function readJson(filePath) {
@@ -65,18 +105,18 @@ async function rewriteBotJson() {
       const data = await readJson(filePath);
 
       if (data.actions) {
-        data.actions.idle = `animations/${botId}_idle.fbx`;
-        data.actions.run = `animations/${botId}_run.fbx`;
-        data.actions.power = `animations/${powerAnimation}`;
+        data.actions.idle = `animations/${botId}_idle.glb`;
+        data.actions.run = `animations/${botId}_run.glb`;
+        data.actions.power = animationGlb(`animations/${powerAnimation}`);
 
         if (data.actions.attack) {
-          data.actions.attack = `animations/${botId}_attack.fbx`;
+          data.actions.attack = `animations/${botId}_attack.glb`;
         }
       }
 
       if (Array.isArray(data.availableWeapons)) {
         for (const weapon of data.availableWeapons) {
-          weapon.attack = `animations/${botId}_attack.fbx`;
+          weapon.attack = `animations/${botId}_attack.glb`;
         }
       }
 
@@ -102,9 +142,13 @@ async function rewriteGameManifest() {
     }
 
     bot.animations.weaponIdle = `../assets/bots/${bot.id}/animations/${bot.id}_idle.fbx`;
-    bot.animations.weaponRun = `../assets/bots/${bot.id}/animations/${bot.id}_run.fbx`;
-    bot.animations.weaponAttack = `../assets/bots/${bot.id}/animations/${bot.id}_attack.fbx`;
-    bot.animations.weaponPower = `../assets/bots/${bot.id}/animations/${powerAnimation}`;
+    bot.animations.weaponRun = `../assets/bots/${bot.id}/animations/${bot.id}_run.glb`;
+    bot.animations.weaponAttack = `../assets/bots/${bot.id}/animations/${bot.id}_attack.glb`;
+    bot.animations.weaponPower = `../assets/bots/${bot.id}/animations/${animationGlb(powerAnimation)}`;
+
+    for (const [key, value] of Object.entries(bot.animations)) {
+      bot.animations[key] = animationGlb(value);
+    }
   }
 
   await writeJson(manifestPath, manifest);
@@ -160,19 +204,10 @@ for (const largeBackground of [
   await rm(largeBackground, { force: true });
 }
 
-for (const fbxTextureFolder of [
-  "assets/bots/atlas/model/atlas_all_rounder.fbm",
-  "assets/bots/blaze/model/blaze_fighter.fbm",
-  "assets/bots/volt/model/volt_speedster.fbm",
-  "assets/bots/sage/model/sage_supporter.fbm",
-  "assets/bots/bastion/model/bastion_tank.fbm",
-  "assets/bots/vex/model/vex_robot_fox.fbm",
-  "assets/bots/bruno/model/bruno_robotic_bear.fbm"
-]) {
-  await rm(path.join(dist, fbxTextureFolder), { recursive: true, force: true });
-}
+await removeFbmFolders(dist);
 
 await removeDuplicateWeaponAnimations(path.join(dist, "assets", "bots"));
+await removeFbxAnimations(path.join(dist, "assets", "bots"));
 for (const fbxModel of [
   "assets/bots/atlas/model/atlas_all_rounder.fbx",
   "assets/bots/blaze/model/blaze_fighter.fbx",

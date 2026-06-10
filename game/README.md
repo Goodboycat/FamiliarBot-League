@@ -10,7 +10,7 @@ The actual FBX, OBJ, PNG, and JSON assets stay under `assets/` so they are not d
 
 Cloudflare Pages uses the `npm run build` script to create `dist/`.
 
-For web delivery, bot model FBX files are converted to GLB and optimized with `gltfpack`. The original FBX files remain in the repository as source assets, while `game_assets.json` points runtime loading at the smaller `.glb` model files.
+For web delivery, bot model and runtime animation FBX files are converted to GLB and optimized with `gltfpack`. The original FBX files remain in the repository as source assets, while the Cloudflare build rewrites runtime loading to the smaller `.glb` files and excludes source FBX/runtime duplicates from `dist/`.
 
 ## Load Order
 
