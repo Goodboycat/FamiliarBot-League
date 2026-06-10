@@ -1,0 +1,16 @@
+{
+  "catalog": "weapon_catalog.json",
+  "loadoutPattern": "<bot-id>/loadout.json",
+  "equipFlow": [
+    "Read the bot loadout file.",
+    "Find the selected weaponId in availableWeapons.",
+    "Load model from the selected weapon model path.",
+    "Attach the model to attachSocket using attachTransform.",
+    "Use the bot weapon action animations for idle, run, attack, and power."
+  ],
+  "runtimeState": {
+    "field": "equippedWeaponId",
+    "defaultFrom": "defaultWeaponId",
+    "canChangeDuringMatch": true
+  }
+}

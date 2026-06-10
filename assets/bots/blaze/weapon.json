@@ -1,0 +1,18 @@
+{
+  "botId": "blaze",
+  "weaponId": "blaze_flame_blaster",
+  "displayName": "Flame Blaster",
+  "model": "weapons/blaze_flame_blaster.obj",
+  "attachSocket": "right_hand",
+  "attachTransform": {
+    "position": [0.09, -0.02, 0.01],
+    "rotation": [0, 90, 0],
+    "scale": [1, 1, 1]
+  },
+  "actions": {
+    "idle": "animations/blaze_weapon_idle.fbx",
+    "run": "animations/blaze_weapon_run.fbx",
+    "attack": "animations/blaze_flame_blaster_attack.fbx",
+    "power": "animations/blaze_flame_uppercut_weapon.fbx"
+  }
+}

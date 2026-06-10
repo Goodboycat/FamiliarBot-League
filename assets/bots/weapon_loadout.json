@@ -1,0 +1,30 @@
+[
+  {
+    "botId": "atlas",
+    "loadoutFile": "atlas/loadout.json"
+  },
+  {
+    "botId": "blaze",
+    "loadoutFile": "blaze/loadout.json"
+  },
+  {
+    "botId": "volt",
+    "loadoutFile": "volt/loadout.json"
+  },
+  {
+    "botId": "sage",
+    "loadoutFile": "sage/loadout.json"
+  },
+  {
+    "botId": "bastion",
+    "loadoutFile": "bastion/loadout.json"
+  },
+  {
+    "botId": "vex",
+    "loadoutFile": "vex/loadout.json"
+  },
+  {
+    "botId": "bruno",
+    "loadoutFile": "bruno/loadout.json"
+  }
+]

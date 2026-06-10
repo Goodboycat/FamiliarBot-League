@@ -1,0 +1,18 @@
+{
+  "botId": "sage",
+  "weaponId": "sage_repair_staff",
+  "displayName": "Repair Staff",
+  "model": "weapons/sage_repair_staff.obj",
+  "attachSocket": "right_hand",
+  "attachTransform": {
+    "position": [0.06, -0.03, 0.04],
+    "rotation": [0, 0, 8],
+    "scale": [1, 1, 1]
+  },
+  "actions": {
+    "idle": "animations/sage_weapon_idle.fbx",
+    "run": "animations/sage_weapon_run.fbx",
+    "attack": "animations/sage_repair_staff_cast.fbx",
+    "power": "animations/sage_repair_field_weapon.fbx"
+  }
+}

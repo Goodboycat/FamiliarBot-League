@@ -1,0 +1,18 @@
+{
+  "botId": "bruno",
+  "weaponId": "bruno_gravity_hammer",
+  "displayName": "Gravity Hammer",
+  "model": "weapons/bruno_gravity_hammer.obj",
+  "attachSocket": "right_hand",
+  "attachTransform": {
+    "position": [0.1, -0.05, 0.04],
+    "rotation": [0, 8, -12],
+    "scale": [1.2, 1.2, 1.2]
+  },
+  "actions": {
+    "idle": "animations/bruno_weapon_idle.fbx",
+    "run": "animations/bruno_weapon_run.fbx",
+    "attack": "animations/bruno_gravity_hammer_attack.fbx",
+    "power": "animations/bruno_bear_slam_weapon.fbx"
+  }
+}

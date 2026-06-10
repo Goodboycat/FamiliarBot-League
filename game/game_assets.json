@@ -1,0 +1,155 @@
+{
+  "gameId": "familiarbot_league",
+  "displayName": "FamiliarBot League",
+  "loadingScreen": {
+    "config": "../assets/ui/loading/loading_screen.json",
+    "background": "../assets/ui/loading/loading_background_robot_1280.jpg",
+    "preview": "../assets/ui/loading/preview.html"
+  },
+  "roster": "../assets/bots/bot_names.json",
+  "weaponCatalog": "../assets/bots/weapon_catalog.json",
+  "weaponSwapRules": "../assets/bots/weapon_swap_rules.json",
+  "powerCatalog": "../assets/bots/bot_powers.json",
+  "bots": [
+    {
+      "id": "atlas",
+      "displayName": "Atlas",
+      "role": "all_rounder",
+      "model": "../assets/bots/atlas/model/atlas_all_rounder.fbx",
+      "animations": {
+        "idle": "../assets/bots/atlas/animations/atlas_idle.fbx",
+        "run": "../assets/bots/atlas/animations/atlas_run.fbx",
+        "attack": "../assets/bots/atlas/animations/atlas_attack.fbx",
+        "death": "../assets/bots/atlas/animations/atlas_death.fbx",
+        "power": "../assets/bots/atlas/animations/atlas_balance_burst_animation.fbx",
+        "weaponIdle": "../assets/bots/atlas/animations/atlas_weapon_idle.fbx",
+        "weaponRun": "../assets/bots/atlas/animations/atlas_weapon_run.fbx",
+        "weaponAttack": "../assets/bots/atlas/animations/atlas_pulse_rifle_attack.fbx",
+        "weaponPower": "../assets/bots/atlas/animations/atlas_balance_burst_weapon.fbx"
+      },
+      "power": "../assets/bots/atlas/power.json",
+      "weapon": "../assets/bots/atlas/weapon.json",
+      "loadout": "../assets/bots/atlas/loadout.json"
+    },
+    {
+      "id": "blaze",
+      "displayName": "Blaze",
+      "role": "fighter",
+      "model": "../assets/bots/blaze/model/blaze_fighter.fbx",
+      "animations": {
+        "idle": "../assets/bots/blaze/animations/blaze_idle.fbx",
+        "run": "../assets/bots/blaze/animations/blaze_run.fbx",
+        "attack": "../assets/bots/blaze/animations/blaze_attack.fbx",
+        "death": "../assets/bots/blaze/animations/blaze_death.fbx",
+        "power": "../assets/bots/blaze/animations/blaze_flame_uppercut_animation.fbx",
+        "weaponIdle": "../assets/bots/blaze/animations/blaze_weapon_idle.fbx",
+        "weaponRun": "../assets/bots/blaze/animations/blaze_weapon_run.fbx",
+        "weaponAttack": "../assets/bots/blaze/animations/blaze_flame_blaster_attack.fbx",
+        "weaponPower": "../assets/bots/blaze/animations/blaze_flame_uppercut_weapon.fbx"
+      },
+      "power": "../assets/bots/blaze/power.json",
+      "weapon": "../assets/bots/blaze/weapon.json",
+      "loadout": "../assets/bots/blaze/loadout.json"
+    },
+    {
+      "id": "volt",
+      "displayName": "Volt",
+      "role": "speedster",
+      "model": "../assets/bots/volt/model/volt_speedster.fbx",
+      "animations": {
+        "idle": "../assets/bots/volt/animations/volt_idle.fbx",
+        "run": "../assets/bots/volt/animations/volt_run.fbx",
+        "attack": "../assets/bots/volt/animations/volt_attack.fbx",
+        "death": "../assets/bots/volt/animations/volt_death.fbx",
+        "power": "../assets/bots/volt/animations/volt_lightning_dash_animation.fbx",
+        "weaponIdle": "../assets/bots/volt/animations/volt_weapon_idle.fbx",
+        "weaponRun": "../assets/bots/volt/animations/volt_weapon_run.fbx",
+        "weaponAttack": "../assets/bots/volt/animations/volt_arc_pistols_attack.fbx",
+        "weaponPower": "../assets/bots/volt/animations/volt_lightning_dash_weapon.fbx"
+      },
+      "power": "../assets/bots/volt/power.json",
+      "weapon": "../assets/bots/volt/weapon.json",
+      "loadout": "../assets/bots/volt/loadout.json"
+    },
+    {
+      "id": "sage",
+      "displayName": "Sage",
+      "role": "supporter",
+      "model": "../assets/bots/sage/model/sage_supporter.fbx",
+      "animations": {
+        "idle": "../assets/bots/sage/animations/sage_idle.fbx",
+        "run": "../assets/bots/sage/animations/sage_run.fbx",
+        "attack": "../assets/bots/sage/animations/sage_attack.fbx",
+        "death": "../assets/bots/sage/animations/sage_death.fbx",
+        "power": "../assets/bots/sage/animations/sage_repair_field_animation.fbx",
+        "weaponIdle": "../assets/bots/sage/animations/sage_weapon_idle.fbx",
+        "weaponRun": "../assets/bots/sage/animations/sage_weapon_run.fbx",
+        "weaponAttack": "../assets/bots/sage/animations/sage_repair_staff_cast.fbx",
+        "weaponPower": "../assets/bots/sage/animations/sage_repair_field_weapon.fbx"
+      },
+      "power": "../assets/bots/sage/power.json",
+      "weapon": "../assets/bots/sage/weapon.json",
+      "loadout": "../assets/bots/sage/loadout.json"
+    },
+    {
+      "id": "bastion",
+      "displayName": "Bastion",
+      "role": "tank",
+      "model": "../assets/bots/bastion/model/bastion_tank.fbx",
+      "animations": {
+        "idle": "../assets/bots/bastion/animations/bastion_idle.fbx",
+        "run": "../assets/bots/bastion/animations/bastion_run.fbx",
+        "attack": "../assets/bots/bastion/animations/bastion_attack.fbx",
+        "death": "../assets/bots/bastion/animations/bastion_death.fbx",
+        "power": "../assets/bots/bastion/animations/bastion_fortress_guard_animation.fbx",
+        "weaponIdle": "../assets/bots/bastion/animations/bastion_weapon_idle.fbx",
+        "weaponRun": "../assets/bots/bastion/animations/bastion_weapon_run.fbx",
+        "weaponAttack": "../assets/bots/bastion/animations/bastion_heavy_cannon_attack.fbx",
+        "weaponPower": "../assets/bots/bastion/animations/bastion_fortress_guard_weapon.fbx"
+      },
+      "power": "../assets/bots/bastion/power.json",
+      "weapon": "../assets/bots/bastion/weapon.json",
+      "loadout": "../assets/bots/bastion/loadout.json"
+    },
+    {
+      "id": "vex",
+      "displayName": "Vex",
+      "role": "robot_fox",
+      "model": "../assets/bots/vex/model/vex_robot_fox.fbx",
+      "animations": {
+        "idle": "../assets/bots/vex/animations/vex_idle.fbx",
+        "run": "../assets/bots/vex/animations/vex_run.fbx",
+        "attack": "../assets/bots/vex/animations/vex_attack.fbx",
+        "death": "../assets/bots/vex/animations/vex_death.fbx",
+        "power": "../assets/bots/vex/animations/vex_fox_glitch_animation.fbx",
+        "weaponIdle": "../assets/bots/vex/animations/vex_weapon_idle.fbx",
+        "weaponRun": "../assets/bots/vex/animations/vex_weapon_run.fbx",
+        "weaponAttack": "../assets/bots/vex/animations/vex_plasma_claws_attack.fbx",
+        "weaponPower": "../assets/bots/vex/animations/vex_fox_glitch_weapon.fbx"
+      },
+      "power": "../assets/bots/vex/power.json",
+      "weapon": "../assets/bots/vex/weapon.json",
+      "loadout": "../assets/bots/vex/loadout.json"
+    },
+    {
+      "id": "bruno",
+      "displayName": "Bruno",
+      "role": "robotic_bear",
+      "model": "../assets/bots/bruno/model/bruno_robotic_bear.fbx",
+      "animations": {
+        "idle": "../assets/bots/bruno/animations/bruno_idle.fbx",
+        "run": "../assets/bots/bruno/animations/bruno_run.fbx",
+        "attack": "../assets/bots/bruno/animations/bruno_attack.fbx",
+        "death": "../assets/bots/bruno/animations/bruno_death.fbx",
+        "power": "../assets/bots/bruno/animations/bruno_bear_slam_animation.fbx",
+        "weaponIdle": "../assets/bots/bruno/animations/bruno_weapon_idle.fbx",
+        "weaponRun": "../assets/bots/bruno/animations/bruno_weapon_run.fbx",
+        "weaponAttack": "../assets/bots/bruno/animations/bruno_gravity_hammer_attack.fbx",
+        "weaponPower": "../assets/bots/bruno/animations/bruno_bear_slam_weapon.fbx"
+      },
+      "power": "../assets/bots/bruno/power.json",
+      "weapon": "../assets/bots/bruno/weapon.json",
+      "loadout": "../assets/bots/bruno/loadout.json"
+    }
+  ]
+}

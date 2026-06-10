@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FamiliarBot League Loading Preview</title>
+    <link rel="stylesheet" href="./loading-screen.css">
+  </head>
+  <body>
+    <script src="./loading-screen.js"></script>
+    <script>
+      FamiliarBotLoadingScreen.start({
+        onReady(root) {
+          root.querySelector(".loading-step").textContent = "Ready to enter arena";
+        }
+      });
+    </script>
+  </body>
+</html>

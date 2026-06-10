@@ -1,0 +1,25 @@
+{
+  "id": "main_menu",
+  "displayName": "FamiliarBot League Main Menu",
+  "background": "../loading/loading_background_robot_1280.jpg",
+  "gameManifest": "../../../game/game_assets.json",
+  "defaultPanel": "bots",
+  "buttons": [
+    {
+      "id": "play",
+      "label": "Play"
+    },
+    {
+      "id": "bots",
+      "label": "Bots"
+    },
+    {
+      "id": "weapons",
+      "label": "Weapons"
+    },
+    {
+      "id": "settings",
+      "label": "Settings"
+    }
+  ]
+}

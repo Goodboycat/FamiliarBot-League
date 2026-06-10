@@ -1,0 +1,18 @@
+{
+  "botId": "vex",
+  "weaponId": "vex_plasma_claws",
+  "displayName": "Plasma Claws",
+  "model": "weapons/vex_plasma_claws.obj",
+  "attachSocket": "both_hands",
+  "attachTransform": {
+    "position": [0.03, -0.01, 0.04],
+    "rotation": [0, 0, 0],
+    "scale": [0.9, 0.9, 0.9]
+  },
+  "actions": {
+    "idle": "animations/vex_weapon_idle.fbx",
+    "run": "animations/vex_weapon_run.fbx",
+    "attack": "animations/vex_plasma_claws_attack.fbx",
+    "power": "animations/vex_fox_glitch_weapon.fbx"
+  }
+}

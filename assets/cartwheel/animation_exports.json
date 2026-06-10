@@ -1,0 +1,72 @@
+[
+  {
+    "botId": "atlas",
+    "weaponId": "atlas_pulse_rifle",
+    "expectedExports": {
+      "idle": "../bots/atlas/animations/atlas_weapon_idle.fbx",
+      "run": "../bots/atlas/animations/atlas_weapon_run.fbx",
+      "attack": "../bots/atlas/animations/atlas_pulse_rifle_attack.fbx",
+      "power": "../bots/atlas/animations/atlas_balance_burst_weapon.fbx"
+    }
+  },
+  {
+    "botId": "blaze",
+    "weaponId": "blaze_flame_blaster",
+    "expectedExports": {
+      "idle": "../bots/blaze/animations/blaze_weapon_idle.fbx",
+      "run": "../bots/blaze/animations/blaze_weapon_run.fbx",
+      "attack": "../bots/blaze/animations/blaze_flame_blaster_attack.fbx",
+      "power": "../bots/blaze/animations/blaze_flame_uppercut_weapon.fbx"
+    }
+  },
+  {
+    "botId": "volt",
+    "weaponId": "volt_arc_pistols",
+    "expectedExports": {
+      "idle": "../bots/volt/animations/volt_weapon_idle.fbx",
+      "run": "../bots/volt/animations/volt_weapon_run.fbx",
+      "attack": "../bots/volt/animations/volt_arc_pistols_attack.fbx",
+      "power": "../bots/volt/animations/volt_lightning_dash_weapon.fbx"
+    }
+  },
+  {
+    "botId": "sage",
+    "weaponId": "sage_repair_staff",
+    "expectedExports": {
+      "idle": "../bots/sage/animations/sage_weapon_idle.fbx",
+      "run": "../bots/sage/animations/sage_weapon_run.fbx",
+      "attack": "../bots/sage/animations/sage_repair_staff_cast.fbx",
+      "power": "../bots/sage/animations/sage_repair_field_weapon.fbx"
+    }
+  },
+  {
+    "botId": "bastion",
+    "weaponId": "bastion_heavy_cannon",
+    "expectedExports": {
+      "idle": "../bots/bastion/animations/bastion_weapon_idle.fbx",
+      "run": "../bots/bastion/animations/bastion_weapon_run.fbx",
+      "attack": "../bots/bastion/animations/bastion_heavy_cannon_attack.fbx",
+      "power": "../bots/bastion/animations/bastion_fortress_guard_weapon.fbx"
+    }
+  },
+  {
+    "botId": "vex",
+    "weaponId": "vex_plasma_claws",
+    "expectedExports": {
+      "idle": "../bots/vex/animations/vex_weapon_idle.fbx",
+      "run": "../bots/vex/animations/vex_weapon_run.fbx",
+      "attack": "../bots/vex/animations/vex_plasma_claws_attack.fbx",
+      "power": "../bots/vex/animations/vex_fox_glitch_weapon.fbx"
+    }
+  },
+  {
+    "botId": "bruno",
+    "weaponId": "bruno_gravity_hammer",
+    "expectedExports": {
+      "idle": "../bots/bruno/animations/bruno_weapon_idle.fbx",
+      "run": "../bots/bruno/animations/bruno_weapon_run.fbx",
+      "attack": "../bots/bruno/animations/bruno_gravity_hammer_attack.fbx",
+      "power": "../bots/bruno/animations/bruno_bear_slam_weapon.fbx"
+    }
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "botId": "bastion",
+  "weaponId": "bastion_heavy_cannon",
+  "displayName": "Heavy Cannon",
+  "model": "weapons/bastion_heavy_cannon.obj",
+  "attachSocket": "right_hand",
+  "attachTransform": {
+    "position": [0.12, -0.04, 0.02],
+    "rotation": [0, 90, 0],
+    "scale": [1.15, 1.15, 1.15]
+  },
+  "actions": {
+    "idle": "animations/bastion_weapon_idle.fbx",
+    "run": "animations/bastion_weapon_run.fbx",
+    "attack": "animations/bastion_heavy_cannon_attack.fbx",
+    "power": "animations/bastion_fortress_guard_weapon.fbx"
+  }
+}

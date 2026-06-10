@@ -1,0 +1,18 @@
+{
+  "botId": "atlas",
+  "weaponId": "atlas_pulse_rifle",
+  "displayName": "Pulse Rifle",
+  "model": "weapons/atlas_pulse_rifle.obj",
+  "attachSocket": "right_hand",
+  "attachTransform": {
+    "position": [0.08, -0.02, 0.02],
+    "rotation": [0, 90, 0],
+    "scale": [1, 1, 1]
+  },
+  "actions": {
+    "idle": "animations/atlas_weapon_idle.fbx",
+    "run": "animations/atlas_weapon_run.fbx",
+    "attack": "animations/atlas_pulse_rifle_attack.fbx",
+    "power": "animations/atlas_balance_burst_weapon.fbx"
+  }
+}

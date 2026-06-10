@@ -1,0 +1,65 @@
+[
+  {
+    "botId": "atlas",
+    "weaponId": "atlas_pulse_rifle",
+    "displayName": "Pulse Rifle",
+    "type": "rifle",
+    "model": "atlas/atlas_pulse_rifle.obj",
+    "attachSocket": "right_hand",
+    "cartwheelPrompt": "../cartwheel/prompts/atlas_weapon_motion.md"
+  },
+  {
+    "botId": "blaze",
+    "weaponId": "blaze_flame_blaster",
+    "displayName": "Flame Blaster",
+    "type": "blaster",
+    "model": "blaze/blaze_flame_blaster.obj",
+    "attachSocket": "right_hand",
+    "cartwheelPrompt": "../cartwheel/prompts/blaze_weapon_motion.md"
+  },
+  {
+    "botId": "volt",
+    "weaponId": "volt_arc_pistols",
+    "displayName": "Arc Pistols",
+    "type": "dual_pistols",
+    "model": "volt/volt_arc_pistols.obj",
+    "attachSocket": "both_hands",
+    "cartwheelPrompt": "../cartwheel/prompts/volt_weapon_motion.md"
+  },
+  {
+    "botId": "sage",
+    "weaponId": "sage_repair_staff",
+    "displayName": "Repair Staff",
+    "type": "support_staff",
+    "model": "sage/sage_repair_staff.obj",
+    "attachSocket": "right_hand",
+    "cartwheelPrompt": "../cartwheel/prompts/sage_weapon_motion.md"
+  },
+  {
+    "botId": "bastion",
+    "weaponId": "bastion_heavy_cannon",
+    "displayName": "Heavy Cannon",
+    "type": "cannon",
+    "model": "bastion/bastion_heavy_cannon.obj",
+    "attachSocket": "right_hand",
+    "cartwheelPrompt": "../cartwheel/prompts/bastion_weapon_motion.md"
+  },
+  {
+    "botId": "vex",
+    "weaponId": "vex_plasma_claws",
+    "displayName": "Plasma Claws",
+    "type": "claws",
+    "model": "vex/vex_plasma_claws.obj",
+    "attachSocket": "both_hands",
+    "cartwheelPrompt": "../cartwheel/prompts/vex_weapon_motion.md"
+  },
+  {
+    "botId": "bruno",
+    "weaponId": "bruno_gravity_hammer",
+    "displayName": "Gravity Hammer",
+    "type": "hammer",
+    "model": "bruno/bruno_gravity_hammer.obj",
+    "attachSocket": "right_hand",
+    "cartwheelPrompt": "../cartwheel/prompts/bruno_weapon_motion.md"
+  }
+]

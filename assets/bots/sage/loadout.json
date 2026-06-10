@@ -1,0 +1,54 @@
+{
+  "botId": "sage",
+  "defaultWeaponId": "sage_repair_staff",
+  "equippedWeaponId": "sage_repair_staff",
+  "actions": {
+    "idle": "animations/sage_weapon_idle.fbx",
+    "run": "animations/sage_weapon_run.fbx",
+    "power": "animations/sage_repair_field_weapon.fbx"
+  },
+  "availableWeapons": [
+    {
+      "weaponId": "atlas_pulse_rifle",
+      "model": "weapons/atlas_pulse_rifle.obj",
+      "attachSocket": "right_hand",
+      "attack": "animations/sage_repair_staff_cast.fbx"
+    },
+    {
+      "weaponId": "blaze_flame_blaster",
+      "model": "weapons/blaze_flame_blaster.obj",
+      "attachSocket": "right_hand",
+      "attack": "animations/sage_repair_staff_cast.fbx"
+    },
+    {
+      "weaponId": "volt_arc_pistols",
+      "model": "weapons/volt_arc_pistols.obj",
+      "attachSocket": "both_hands",
+      "attack": "animations/sage_repair_staff_cast.fbx"
+    },
+    {
+      "weaponId": "sage_repair_staff",
+      "model": "weapons/sage_repair_staff.obj",
+      "attachSocket": "right_hand",
+      "attack": "animations/sage_repair_staff_cast.fbx"
+    },
+    {
+      "weaponId": "bastion_heavy_cannon",
+      "model": "weapons/bastion_heavy_cannon.obj",
+      "attachSocket": "right_hand",
+      "attack": "animations/sage_repair_staff_cast.fbx"
+    },
+    {
+      "weaponId": "vex_plasma_claws",
+      "model": "weapons/vex_plasma_claws.obj",
+      "attachSocket": "both_hands",
+      "attack": "animations/sage_repair_staff_cast.fbx"
+    },
+    {
+      "weaponId": "bruno_gravity_hammer",
+      "model": "weapons/bruno_gravity_hammer.obj",
+      "attachSocket": "right_hand",
+      "attack": "animations/sage_repair_staff_cast.fbx"
+    }
+  ]
+}

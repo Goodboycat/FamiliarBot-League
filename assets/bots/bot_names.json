@@ -3,43 +3,63 @@
     "id": "atlas",
     "displayName": "Atlas",
     "role": "all_rounder",
-    "model": "atlas/model/atlas_all_rounder.fbx"
+    "model": "atlas/model/atlas_all_rounder.fbx",
+    "animations": "atlas/animations",
+    "defaultWeaponId": "atlas_pulse_rifle",
+    "loadoutFile": "atlas/loadout.json"
   },
   {
     "id": "blaze",
     "displayName": "Blaze",
     "role": "fighter",
-    "model": "blaze/model/blaze_fighter.fbx"
+    "model": "blaze/model/blaze_fighter.fbx",
+    "animations": "blaze/animations",
+    "defaultWeaponId": "blaze_flame_blaster",
+    "loadoutFile": "blaze/loadout.json"
   },
   {
     "id": "volt",
     "displayName": "Volt",
     "role": "speedster",
-    "model": "volt/model/volt_speedster.fbx"
+    "model": "volt/model/volt_speedster.fbx",
+    "animations": "volt/animations",
+    "defaultWeaponId": "volt_arc_pistols",
+    "loadoutFile": "volt/loadout.json"
   },
   {
     "id": "sage",
     "displayName": "Sage",
     "role": "supporter",
-    "model": "sage/model/sage_supporter.fbx"
+    "model": "sage/model/sage_supporter.fbx",
+    "animations": "sage/animations",
+    "defaultWeaponId": "sage_repair_staff",
+    "loadoutFile": "sage/loadout.json"
   },
   {
     "id": "bastion",
     "displayName": "Bastion",
     "role": "tank",
     "model": "bastion/model/bastion_tank.fbx",
-    "animations": "bastion/animations"
+    "animations": "bastion/animations",
+    "defaultWeaponId": "bastion_heavy_cannon",
+    "loadoutFile": "bastion/loadout.json"
   },
   {
     "id": "vex",
     "displayName": "Vex",
     "role": "robot_fox",
-    "model": "vex/model/vex_robot_fox.fbx"
+    "model": "vex/model/vex_robot_fox.fbx",
+    "animations": "vex/animations",
+    "defaultWeaponId": "vex_plasma_claws",
+    "loadoutFile": "vex/loadout.json"
   },
   {
     "id": "bruno",
     "displayName": "Bruno",
     "role": "robotic_bear",
-    "model": "bruno/model/bruno_robotic_bear.fbx"
+    "model": "bruno/model/bruno_robotic_bear.fbx",
+    "animations": "bruno/animations",
+    "defaultWeaponId": "bruno_gravity_hammer",
+    "loadoutFile": "bruno/loadout.json"
   }
 ]

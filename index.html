@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FamiliarBot League</title>
+    <link rel="stylesheet" href="./assets/ui/loading/loading-screen.css">
+    <link rel="stylesheet" href="./assets/ui/menu/menu-screen.css">
+  </head>
+  <body>
+    <script src="./assets/ui/loading/loading-screen.js"></script>
+    <script src="./assets/ui/menu/menu-screen.js"></script>
+    <script>
+      FamiliarBotLoadingScreen.start({
+        configPath: "./assets/ui/loading/loading_screen.json",
+        onReady() {
+          FamiliarBotMainMenu.start({
+            configPath: "./assets/ui/menu/menu_screen.json"
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

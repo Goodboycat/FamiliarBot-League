@@ -1,0 +1,18 @@
+{
+  "botId": "volt",
+  "weaponId": "volt_arc_pistols",
+  "displayName": "Arc Pistols",
+  "model": "weapons/volt_arc_pistols.obj",
+  "attachSocket": "both_hands",
+  "attachTransform": {
+    "position": [0.05, -0.02, 0.01],
+    "rotation": [0, 90, 0],
+    "scale": [1, 1, 1]
+  },
+  "actions": {
+    "idle": "animations/volt_weapon_idle.fbx",
+    "run": "animations/volt_weapon_run.fbx",
+    "attack": "animations/volt_arc_pistols_attack.fbx",
+    "power": "animations/volt_lightning_dash_weapon.fbx"
+  }
+}

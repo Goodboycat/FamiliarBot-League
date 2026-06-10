@@ -1,0 +1,45 @@
+{
+  "id": "main_loading_screen",
+  "displayName": "FamiliarBot League Loading Screen",
+  "background": "loading_background_robot_1280.jpg",
+  "title": "FamiliarBot League",
+  "subtitle": "Preparing bots, weapons, arenas, and powers",
+  "minimumDisplaySeconds": 2,
+  "progress": {
+    "barColor": "#39f5ff",
+    "trackColor": "rgba(255, 255, 255, 0.18)",
+    "glowColor": "rgba(57, 245, 255, 0.55)"
+  },
+  "assetGroups": [
+    {
+      "id": "core_ui",
+      "label": "Loading interface",
+      "paths": [
+        "../icons/home.png",
+        "../icons/settings.png",
+        "../icons/coin.png",
+        "../icons/gem.png"
+      ]
+    },
+    {
+      "id": "bots",
+      "label": "Loading bots",
+      "manifest": "../../bots/bot_names.json"
+    },
+    {
+      "id": "game_manifest",
+      "label": "Loading game roster",
+      "manifest": "../../../game/game_assets.json"
+    },
+    {
+      "id": "weapons",
+      "label": "Loading weapons",
+      "manifest": "../../bots/weapon_catalog.json"
+    },
+    {
+      "id": "powers",
+      "label": "Loading powers",
+      "manifest": "../../bots/bot_powers.json"
+    }
+  ]
+}

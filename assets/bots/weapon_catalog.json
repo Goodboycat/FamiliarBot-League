@@ -1,0 +1,51 @@
+[
+  {
+    "weaponId": "atlas_pulse_rifle",
+    "displayName": "Pulse Rifle",
+    "type": "rifle",
+    "defaultSocket": "right_hand",
+    "modelFile": "atlas_pulse_rifle.obj"
+  },
+  {
+    "weaponId": "blaze_flame_blaster",
+    "displayName": "Flame Blaster",
+    "type": "blaster",
+    "defaultSocket": "right_hand",
+    "modelFile": "blaze_flame_blaster.obj"
+  },
+  {
+    "weaponId": "volt_arc_pistols",
+    "displayName": "Arc Pistols",
+    "type": "dual_pistols",
+    "defaultSocket": "both_hands",
+    "modelFile": "volt_arc_pistols.obj"
+  },
+  {
+    "weaponId": "sage_repair_staff",
+    "displayName": "Repair Staff",
+    "type": "support_staff",
+    "defaultSocket": "right_hand",
+    "modelFile": "sage_repair_staff.obj"
+  },
+  {
+    "weaponId": "bastion_heavy_cannon",
+    "displayName": "Heavy Cannon",
+    "type": "cannon",
+    "defaultSocket": "right_hand",
+    "modelFile": "bastion_heavy_cannon.obj"
+  },
+  {
+    "weaponId": "vex_plasma_claws",
+    "displayName": "Plasma Claws",
+    "type": "claws",
+    "defaultSocket": "both_hands",
+    "modelFile": "vex_plasma_claws.obj"
+  },
+  {
+    "weaponId": "bruno_gravity_hammer",
+    "displayName": "Gravity Hammer",
+    "type": "hammer",
+    "defaultSocket": "right_hand",
+    "modelFile": "bruno_gravity_hammer.obj"
+  }
+]
