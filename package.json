@@ -1,0 +1,7 @@
+{
+  "scripts": {
+    "build": "node scripts/build-cloudflare-pages.mjs",
+    "pages:build": "node scripts/build-cloudflare-pages.mjs"
+  },
+  "devDependencies": {}
+}
