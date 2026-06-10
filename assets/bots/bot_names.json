@@ -1,0 +1,45 @@
+[
+  {
+    "id": "atlas",
+    "displayName": "Atlas",
+    "role": "all_rounder",
+    "model": "atlas/model/atlas_all_rounder.fbx"
+  },
+  {
+    "id": "blaze",
+    "displayName": "Blaze",
+    "role": "fighter",
+    "model": "blaze/model/blaze_fighter.fbx"
+  },
+  {
+    "id": "volt",
+    "displayName": "Volt",
+    "role": "speedster",
+    "model": "volt/model/volt_speedster.fbx"
+  },
+  {
+    "id": "sage",
+    "displayName": "Sage",
+    "role": "supporter",
+    "model": "sage/model/sage_supporter.fbx"
+  },
+  {
+    "id": "bastion",
+    "displayName": "Bastion",
+    "role": "tank",
+    "model": "bastion/model/bastion_tank.fbx",
+    "animations": "bastion/animations"
+  },
+  {
+    "id": "vex",
+    "displayName": "Vex",
+    "role": "robot_fox",
+    "model": "vex/model/vex_robot_fox.fbx"
+  },
+  {
+    "id": "bruno",
+    "displayName": "Bruno",
+    "role": "robotic_bear",
+    "model": "bruno/model/bruno_robotic_bear.fbx"
+  }
+]
