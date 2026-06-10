@@ -1,0 +1,19 @@
+{
+  "id": "bastion",
+  "displayName": "Bastion",
+  "role": "tank",
+  "power": {
+    "name": "Fortress Guard",
+    "type": "defense",
+    "description": "Bastion locks into guard mode, taking reduced damage and shielding nearby friendly bots.",
+    "cooldownSeconds": 15,
+    "durationSeconds": 7,
+    "visuals": [
+      "heavy blue shield wall",
+      "armor plates locking",
+      "ground impact dust"
+    ],
+    "animationCue": "Stomp, brace arms wide, project a thick shield wall."
+  }
+}
+

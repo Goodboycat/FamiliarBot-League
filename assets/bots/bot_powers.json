@@ -1,0 +1,52 @@
+[
+  {
+    "id": "atlas",
+    "displayName": "Atlas",
+    "role": "all_rounder",
+    "powerFile": "atlas/power.json",
+    "powerName": "Balance Burst"
+  },
+  {
+    "id": "blaze",
+    "displayName": "Blaze",
+    "role": "fighter",
+    "powerFile": "blaze/power.json",
+    "powerName": "Flame Uppercut"
+  },
+  {
+    "id": "volt",
+    "displayName": "Volt",
+    "role": "speedster",
+    "powerFile": "volt/power.json",
+    "powerName": "Lightning Dash"
+  },
+  {
+    "id": "sage",
+    "displayName": "Sage",
+    "role": "supporter",
+    "powerFile": "sage/power.json",
+    "powerName": "Repair Field"
+  },
+  {
+    "id": "bastion",
+    "displayName": "Bastion",
+    "role": "tank",
+    "powerFile": "bastion/power.json",
+    "powerName": "Fortress Guard"
+  },
+  {
+    "id": "vex",
+    "displayName": "Vex",
+    "role": "robot_fox",
+    "powerFile": "vex/power.json",
+    "powerName": "Fox Glitch"
+  },
+  {
+    "id": "bruno",
+    "displayName": "Bruno",
+    "role": "robotic_bear",
+    "powerFile": "bruno/power.json",
+    "powerName": "Bear Slam"
+  }
+]
+

@@ -1,0 +1,19 @@
+{
+  "id": "vex",
+  "displayName": "Vex",
+  "role": "robot_fox",
+  "power": {
+    "name": "Fox Glitch",
+    "type": "trick",
+    "description": "Vex creates two glitch decoys that confuse enemies while Vex slips behind the target.",
+    "cooldownSeconds": 10,
+    "durationSeconds": 4,
+    "visuals": [
+      "purple glitch clones",
+      "fox-tail hologram streak",
+      "pixel pop vanish"
+    ],
+    "animationCue": "Tail flick, body flickers, two hologram fox copies split outward."
+  }
+}
+

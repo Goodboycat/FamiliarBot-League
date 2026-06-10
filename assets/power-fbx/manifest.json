@@ -1,0 +1,52 @@
+[
+  {
+    "id": "atlas",
+    "displayName": "Atlas",
+    "powerName": "Balance Burst",
+    "fbx": "atlas/atlas_balance_burst.fbx",
+    "sourceModel": "../bots/atlas/model/atlas_all_rounder.fbx"
+  },
+  {
+    "id": "blaze",
+    "displayName": "Blaze",
+    "powerName": "Flame Uppercut",
+    "fbx": "blaze/blaze_flame_uppercut.fbx",
+    "sourceModel": "../bots/blaze/model/blaze_fighter.fbx"
+  },
+  {
+    "id": "volt",
+    "displayName": "Volt",
+    "powerName": "Lightning Dash",
+    "fbx": "volt/volt_lightning_dash.fbx",
+    "sourceModel": "../bots/volt/model/volt_speedster.fbx"
+  },
+  {
+    "id": "sage",
+    "displayName": "Sage",
+    "powerName": "Repair Field",
+    "fbx": "sage/sage_repair_field.fbx",
+    "sourceModel": "../bots/sage/model/sage_supporter.fbx"
+  },
+  {
+    "id": "bastion",
+    "displayName": "Bastion",
+    "powerName": "Fortress Guard",
+    "fbx": "bastion/bastion_fortress_guard.fbx",
+    "sourceModel": "../bots/bastion/model/bastion_tank.fbx"
+  },
+  {
+    "id": "vex",
+    "displayName": "Vex",
+    "powerName": "Fox Glitch",
+    "fbx": "vex/vex_fox_glitch.fbx",
+    "sourceModel": "../bots/vex/model/vex_robot_fox.fbx"
+  },
+  {
+    "id": "bruno",
+    "displayName": "Bruno",
+    "powerName": "Bear Slam",
+    "fbx": "bruno/bruno_bear_slam.fbx",
+    "sourceModel": "../bots/bruno/model/bruno_robotic_bear.fbx"
+  }
+]
+

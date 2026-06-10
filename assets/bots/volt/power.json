@@ -1,0 +1,19 @@
+{
+  "id": "volt",
+  "displayName": "Volt",
+  "role": "speedster",
+  "power": {
+    "name": "Lightning Dash",
+    "type": "mobility_attack",
+    "description": "Volt zips through the arena in a lightning line, dodging hits and damaging every enemy crossed.",
+    "cooldownSeconds": 7,
+    "durationSeconds": 1,
+    "visuals": [
+      "electric blue afterimage",
+      "zigzag lightning trail",
+      "screen-edge speed streaks"
+    ],
+    "animationCue": "Lean forward, crackle with electricity, vanish into a fast dash."
+  }
+}
+

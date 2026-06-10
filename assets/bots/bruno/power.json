@@ -1,0 +1,19 @@
+{
+  "id": "bruno",
+  "displayName": "Bruno",
+  "role": "robotic_bear",
+  "power": {
+    "name": "Bear Slam",
+    "type": "area_attack",
+    "description": "Bruno leaps and slams the ground, stunning nearby enemies with a heavy shockwave.",
+    "cooldownSeconds": 11,
+    "stunSeconds": 2,
+    "visuals": [
+      "yellow shockwave ring",
+      "metal claw sparks",
+      "ground crack decal"
+    ],
+    "animationCue": "Rear up, leap forward, smash both arms into the floor."
+  }
+}
+

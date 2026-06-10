@@ -1,0 +1,19 @@
+{
+  "id": "sage",
+  "displayName": "Sage",
+  "role": "supporter",
+  "power": {
+    "name": "Repair Field",
+    "type": "healing",
+    "description": "Sage creates a green repair zone that heals friendly bots over time and clears one negative effect.",
+    "cooldownSeconds": 14,
+    "durationSeconds": 6,
+    "visuals": [
+      "green healing circle",
+      "floating plus particles",
+      "soft scanner beam"
+    ],
+    "animationCue": "Raise both hands, project a glowing repair field onto the ground."
+  }
+}
+

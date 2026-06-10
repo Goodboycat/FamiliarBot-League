@@ -1,0 +1,19 @@
+{
+  "id": "blaze",
+  "displayName": "Blaze",
+  "role": "fighter",
+  "power": {
+    "name": "Flame Uppercut",
+    "type": "attack",
+    "description": "Blaze lunges forward with a flaming uppercut that knocks enemies back and leaves a short burn trail.",
+    "cooldownSeconds": 8,
+    "damage": 35,
+    "visuals": [
+      "orange flame fist",
+      "sparks on impact",
+      "brief fire trail"
+    ],
+    "animationCue": "Crouch, fist ignites, leap into a fast rising punch."
+  }
+}
+

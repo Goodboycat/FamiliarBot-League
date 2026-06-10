@@ -1,0 +1,19 @@
+{
+  "id": "atlas",
+  "displayName": "Atlas",
+  "role": "all_rounder",
+  "power": {
+    "name": "Balance Burst",
+    "type": "team_buff",
+    "description": "Atlas sends out a balanced energy pulse that gives nearby friendly bots a short boost to speed, attack, and defense.",
+    "cooldownSeconds": 12,
+    "durationSeconds": 5,
+    "visuals": [
+      "cyan pulse ring",
+      "white core flash",
+      "small orbiting buff sparks"
+    ],
+    "animationCue": "Plant feet, charge chest core, release a circular energy wave."
+  }
+}
+
