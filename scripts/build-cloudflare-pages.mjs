@@ -160,7 +160,30 @@ for (const largeBackground of [
   await rm(largeBackground, { force: true });
 }
 
+for (const fbxTextureFolder of [
+  "assets/bots/atlas/model/atlas_all_rounder.fbm",
+  "assets/bots/blaze/model/blaze_fighter.fbm",
+  "assets/bots/volt/model/volt_speedster.fbm",
+  "assets/bots/sage/model/sage_supporter.fbm",
+  "assets/bots/bastion/model/bastion_tank.fbm",
+  "assets/bots/vex/model/vex_robot_fox.fbm",
+  "assets/bots/bruno/model/bruno_robotic_bear.fbm"
+]) {
+  await rm(path.join(dist, fbxTextureFolder), { recursive: true, force: true });
+}
+
 await removeDuplicateWeaponAnimations(path.join(dist, "assets", "bots"));
+for (const fbxModel of [
+  "assets/bots/atlas/model/atlas_all_rounder.fbx",
+  "assets/bots/blaze/model/blaze_fighter.fbx",
+  "assets/bots/volt/model/volt_speedster.fbx",
+  "assets/bots/sage/model/sage_supporter.fbx",
+  "assets/bots/bastion/model/bastion_tank.fbx",
+  "assets/bots/vex/model/vex_robot_fox.fbx",
+  "assets/bots/bruno/model/bruno_robotic_bear.fbx"
+]) {
+  await rm(path.join(dist, fbxModel), { force: true });
+}
 await rewriteBotJson();
 await rewriteGameManifest();
 await failOnOversizedFiles();

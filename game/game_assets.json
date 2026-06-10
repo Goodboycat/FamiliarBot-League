@@ -15,7 +15,8 @@
       "id": "atlas",
       "displayName": "Atlas",
       "role": "all_rounder",
-      "model": "../assets/bots/atlas/model/atlas_all_rounder.fbx",
+      "model": "../assets/bots/atlas/model/atlas_all_rounder.glb",
+      "sourceModel": "../assets/bots/atlas/model/atlas_all_rounder.fbx",
       "animations": {
         "idle": "../assets/bots/atlas/animations/atlas_idle.fbx",
         "run": "../assets/bots/atlas/animations/atlas_run.fbx",
@@ -35,7 +36,8 @@
       "id": "blaze",
       "displayName": "Blaze",
       "role": "fighter",
-      "model": "../assets/bots/blaze/model/blaze_fighter.fbx",
+      "model": "../assets/bots/blaze/model/blaze_fighter.glb",
+      "sourceModel": "../assets/bots/blaze/model/blaze_fighter.fbx",
       "animations": {
         "idle": "../assets/bots/blaze/animations/blaze_idle.fbx",
         "run": "../assets/bots/blaze/animations/blaze_run.fbx",
@@ -55,7 +57,8 @@
       "id": "volt",
       "displayName": "Volt",
       "role": "speedster",
-      "model": "../assets/bots/volt/model/volt_speedster.fbx",
+      "model": "../assets/bots/volt/model/volt_speedster.glb",
+      "sourceModel": "../assets/bots/volt/model/volt_speedster.fbx",
       "animations": {
         "idle": "../assets/bots/volt/animations/volt_idle.fbx",
         "run": "../assets/bots/volt/animations/volt_run.fbx",
@@ -75,7 +78,8 @@
       "id": "sage",
       "displayName": "Sage",
       "role": "supporter",
-      "model": "../assets/bots/sage/model/sage_supporter.fbx",
+      "model": "../assets/bots/sage/model/sage_supporter.glb",
+      "sourceModel": "../assets/bots/sage/model/sage_supporter.fbx",
       "animations": {
         "idle": "../assets/bots/sage/animations/sage_idle.fbx",
         "run": "../assets/bots/sage/animations/sage_run.fbx",
@@ -95,7 +99,8 @@
       "id": "bastion",
       "displayName": "Bastion",
       "role": "tank",
-      "model": "../assets/bots/bastion/model/bastion_tank.fbx",
+      "model": "../assets/bots/bastion/model/bastion_tank.glb",
+      "sourceModel": "../assets/bots/bastion/model/bastion_tank.fbx",
       "animations": {
         "idle": "../assets/bots/bastion/animations/bastion_idle.fbx",
         "run": "../assets/bots/bastion/animations/bastion_run.fbx",
@@ -115,7 +120,8 @@
       "id": "vex",
       "displayName": "Vex",
       "role": "robot_fox",
-      "model": "../assets/bots/vex/model/vex_robot_fox.fbx",
+      "model": "../assets/bots/vex/model/vex_robot_fox.glb",
+      "sourceModel": "../assets/bots/vex/model/vex_robot_fox.fbx",
       "animations": {
         "idle": "../assets/bots/vex/animations/vex_idle.fbx",
         "run": "../assets/bots/vex/animations/vex_run.fbx",
@@ -135,7 +141,8 @@
       "id": "bruno",
       "displayName": "Bruno",
       "role": "robotic_bear",
-      "model": "../assets/bots/bruno/model/bruno_robotic_bear.fbx",
+      "model": "../assets/bots/bruno/model/bruno_robotic_bear.glb",
+      "sourceModel": "../assets/bots/bruno/model/bruno_robotic_bear.fbx",
       "animations": {
         "idle": "../assets/bots/bruno/animations/bruno_idle.fbx",
         "run": "../assets/bots/bruno/animations/bruno_run.fbx",
