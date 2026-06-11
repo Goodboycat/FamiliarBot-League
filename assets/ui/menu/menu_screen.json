@@ -1,25 +1,130 @@
 {
-  "id": "main_menu",
-  "displayName": "FamiliarBot League Main Menu",
-  "background": "../loading/loading_background_robot_1280.jpg",
-  "gameManifest": "../../../game/game_assets.json",
-  "defaultPanel": "bots",
-  "buttons": [
+  "orientation": "landscape",
+  "screenSize": {
+    "width": 844,
+    "height": 390
+  },
+  "items": [
     {
-      "id": "play",
-      "label": "Play"
+      "id": "cd26fc51-2815-49d9-b147-b793b5d990a9",
+      "assetId": "d669dc83-3305-452d-b018-6150d314cd84",
+      "x": -131.8463425647895,
+      "y": -209.13068050189602,
+      "scale": 0.7428573608398438,
+      "rotation": 0,
+      "zIndex": 1,
+      "isLocked": true,
+      "assetRef": "NoteGPT_Image_20260611151832.png"
     },
     {
-      "id": "bots",
-      "label": "Bots"
+      "id": "6dffbe7f-a8f7-4431-8cc2-e3f044fb1323",
+      "assetId": "55e3bcaa-7698-4a52-bce4-55ab6f63ff94",
+      "x": 305.45865705355544,
+      "y": 2.585040312903912,
+      "scale": 0.6971426391601563,
+      "rotation": 0,
+      "zIndex": 4,
+      "isLocked": true,
+      "assetRef": "top_right_corner_icons.png"
     },
     {
-      "id": "weapons",
-      "label": "Weapons"
+      "id": "8e585fa4-7826-4d43-95ba-5d6021372715",
+      "assetId": "1ecaa283-fc75-4669-b164-bbeee8c70f1c",
+      "x": 7.1834309109542955,
+      "y": 102.34798039024282,
+      "scale": 0.46857116699218754,
+      "rotation": 0,
+      "zIndex": 49,
+      "isLocked": true,
+      "assetRef": "vertical_container.png"
     },
     {
-      "id": "settings",
-      "label": "Settings"
+      "id": "668f9715-4652-4c0f-b241-ebd5329ef177",
+      "assetId": "64fd22fe-cd7d-4e87-acbf-9e0d10775396",
+      "x": 617.5869940494226,
+      "y": 227.34923865544013,
+      "scale": 0.5085714721679687,
+      "rotation": 0,
+      "zIndex": 15,
+      "isLocked": true,
+      "assetRef": "mech_arena_label.png"
+    },
+    {
+      "id": "0bbfcf94-f31c-45fa-b2dd-8dc94e45d6a6",
+      "assetId": "f947447b-4f08-452d-941e-1aea12934c29",
+      "x": 590.1709572519072,
+      "y": 301.1874017203315,
+      "scale": 0.84,
+      "rotation": 0,
+      "zIndex": 14,
+      "isLocked": true,
+      "assetRef": "mech_arena_button.png"
+    },
+    {
+      "id": "8ff22f1c-f65e-452b-810c-ed6ff4bd697b",
+      "assetId": "600af6a4-bf5c-45ca-92da-7eea93c4d885",
+      "x": 751.8531787600713,
+      "y": 57.07750212597846,
+      "scale": 1,
+      "rotation": 0,
+      "zIndex": 33,
+      "isLocked": false,
+      "assetRef": "customize.png"
+    },
+    {
+      "id": "f288db40-fde9-4a6e-8943-e0326f825618",
+      "assetId": "8169453e-80ea-45eb-913d-4d3048b4ad57",
+      "x": 361.90277847351035,
+      "y": 327.3641265087809,
+      "scale": 0.7885714721679687,
+      "rotation": 0,
+      "zIndex": 51,
+      "isLocked": false,
+      "assetRef": "battle_type.png"
+    },
+    {
+      "id": "8630171a-f262-4e2d-9d6e-09b6a0b05bac",
+      "assetId": "0e0e076f-1719-477e-b640-865094a38504",
+      "x": 77.12879813743507,
+      "y": 0.6906266450593572,
+      "scale": 0.6342861938476562,
+      "rotation": 0,
+      "zIndex": 45,
+      "isLocked": true,
+      "assetRef": "elite_class_3.png"
+    },
+    {
+      "id": "7dfc9165-5e7c-4e20-96c0-a65e851b4564",
+      "assetId": "54ee371f-ab49-4bea-a1da-e47b884e508a",
+      "x": -1.2939786787137493,
+      "y": -1.5436399296448644,
+      "scale": 0.9199999999999999,
+      "rotation": 0,
+      "zIndex": 48,
+      "isLocked": true,
+      "assetRef": "player_level.png"
+    },
+    {
+      "id": "9c995e2b-11f4-41f8-8f0e-9659dd892d99",
+      "assetId": "2fc82346-932e-476d-94e7-16edffc40bd6",
+      "x": 78.60277800217258,
+      "y": 62.31638107617765,
+      "scale": 0.6171429443359375,
+      "rotation": 0,
+      "zIndex": 44,
+      "isLocked": true,
+      "assetRef": "nickname.png"
+    },
+    {
+      "id": "e02fbf0f-5dfe-4836-9608-d90e27c7f763",
+      "assetId": "c0c92441-12e3-44bf-a9ba-8f611521c7fe",
+      "x": 256.1576115321244,
+      "y": 61.6265238687489,
+      "scale": 0.16571502685546874,
+      "rotation": 0,
+      "zIndex": 50,
+      "isLocked": true,
+      "assetRef": "Anime human.png"
     }
   ]
 }
