@@ -10,11 +10,13 @@ The actual FBX, OBJ, PNG, and JSON assets stay under `assets/` so they are not d
 
 Cloudflare Pages uses the `npm run build` script to create `dist/`.
 
-For web delivery, bot model and runtime animation FBX files are converted to GLB and optimized with `gltfpack`. The original FBX files remain in the repository as source assets, while the Cloudflare build rewrites runtime loading to the smaller `.glb` files and excludes source FBX/runtime duplicates from `dist/`.
+For web delivery, bot model FBX files are converted to GLB and optimized with `gltfpack`. The original model FBX files remain in the repository as source assets, while the Cloudflare build ships the smaller `.glb` models and excludes the source model FBX files from `dist/`.
+
+Runtime animations stay as FBX files in the Cloudflare build so the game keeps the original animation set while still using optimized GLB bot models.
 
 ## Asset Cache
 
-`asset-cache.js` stores downloaded runtime assets in IndexedDB under `FamiliarBotAssets`. This lets the browser download large GLB and image files once, then reuse them on later visits.
+`asset-cache.js` stores downloaded runtime assets in IndexedDB under `FamiliarBotAssets`. This lets the browser download large model, animation, and image files once, then reuse them on later visits.
 
 Bump `DB_VERSION` in `game/asset-cache.js` when a release needs players to re-download cached assets.
 
