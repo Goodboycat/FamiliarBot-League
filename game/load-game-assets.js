@@ -1,5 +1,9 @@
 (function () {
   async function fetchJson(path) {
+    if (window.FamiliarBotAssetCache) {
+      return window.FamiliarBotAssetCache.fetchJson(path);
+    }
+
     const response = await fetch(path);
     if (!response.ok) {
       throw new Error(`Could not load ${path}`);
@@ -31,11 +35,16 @@
 
     let loaded = 0;
     for (const file of files) {
-      const response = await fetch(file, { cache: "force-cache" });
-      if (!response.ok) {
-        throw new Error(`Could not preload ${file}`);
+      if (window.FamiliarBotAssetCache) {
+        await window.FamiliarBotAssetCache.fetchAsset(file);
+      } else {
+        const response = await fetch(file, { cache: "force-cache" });
+        if (!response.ok) {
+          throw new Error(`Could not preload ${file}`);
+        }
+        await response.blob();
       }
-      await response.blob();
+
       loaded += 1;
 
       if (typeof onProgress === "function") {

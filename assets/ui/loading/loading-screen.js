@@ -11,11 +11,33 @@
   }
 
   async function fetchJson(path) {
+    if (window.FamiliarBotAssetCache) {
+      return window.FamiliarBotAssetCache.fetchJson(path);
+    }
+
     const response = await fetch(path);
     if (!response.ok) {
       throw new Error(`Could not load ${path}`);
     }
     return response.json();
+  }
+
+  function collectGameAssets(manifest) {
+    return [
+      manifest.loadingScreen?.config,
+      manifest.loadingScreen?.background,
+      manifest.roster,
+      manifest.weaponCatalog,
+      manifest.weaponSwapRules,
+      manifest.powerCatalog,
+      ...(manifest.bots || []).flatMap((bot) => [
+        bot.model,
+        bot.power,
+        bot.weapon,
+        bot.loadout,
+        ...Object.values(bot.animations || {})
+      ])
+    ].filter(Boolean);
   }
 
   async function flattenAssets(config, configPath) {
@@ -27,14 +49,24 @@
       }
 
       if (group.manifest) {
-        assets.push(resolvePath(group.manifest, configPath));
+        const manifestUrl = resolvePath(group.manifest, configPath);
+        assets.push(manifestUrl);
+
+        if (group.id === "game_manifest") {
+          const gameManifest = await fetchJson(manifestUrl);
+          assets.push(...collectGameAssets(gameManifest).map((path) => resolvePath(path, manifestUrl)));
+        }
       }
     }
 
-    return assets;
+    return [...new Set(assets)];
   }
 
   async function preloadAsset(path) {
+    if (window.FamiliarBotAssetCache) {
+      return window.FamiliarBotAssetCache.fetchAsset(path);
+    }
+
     const response = await fetch(path, { cache: "force-cache" });
     if (!response.ok) {
       throw new Error(`Could not preload ${path}`);
@@ -86,9 +118,9 @@
     update("Loading background");
 
     for (const asset of assets) {
-      await preloadAsset(asset);
+      const result = await preloadAsset(asset);
       loaded += 1;
-      update(`Loaded ${asset.split("/").pop()}`);
+      update(`${result?.fromCache ? "Cached" : "Loaded"} ${asset.split("/").pop()}`);
     }
 
     const minimumMs = (config.minimumDisplaySeconds || 0) * 1000;
