@@ -1,0 +1,117 @@
+/* Exported Layout for landscape */
+.game-scene {
+  position: relative;
+  width: 844px;
+  height: 390px;
+  overflow: hidden;
+}
+
+.item-0 /* NoteGPT_Image_20260611151832.png */ {
+  position: absolute;
+  left: -132px;
+  top: -209px;
+  width: 1536px;
+  height: 864px;
+  transform: scale(0.74) rotate(0deg);
+  z-index: 1;
+}
+
+.item-1 /* top_right_corner_icons.png */ {
+  position: absolute;
+  left: 305px;
+  top: 3px;
+  width: 767px;
+  height: 68px;
+  transform: scale(0.70) rotate(0deg);
+  z-index: 4;
+}
+
+.item-2 /* vertical_container.png */ {
+  position: absolute;
+  left: 7px;
+  top: 102px;
+  width: 130px;
+  height: 600px;
+  transform: scale(0.47) rotate(0deg);
+  z-index: 49;
+}
+
+.item-3 /* mech_arena_label.png */ {
+  position: absolute;
+  left: 618px;
+  top: 227px;
+  width: 449px;
+  height: 153px;
+  transform: scale(0.51) rotate(0deg);
+  z-index: 15;
+}
+
+.item-4 /* mech_arena_button.png */ {
+  position: absolute;
+  left: 590px;
+  top: 301px;
+  width: 339px;
+  height: 108px;
+  transform: scale(0.84) rotate(0deg);
+  z-index: 14;
+}
+
+.item-5 /* customize.png */ {
+  position: absolute;
+  left: 752px;
+  top: 57px;
+  width: 87px;
+  height: 87px;
+  z-index: 33;
+}
+
+.item-6 /* battle_type.png */ {
+  position: absolute;
+  left: 362px;
+  top: 327px;
+  width: 300px;
+  height: 92px;
+  transform: scale(0.79) rotate(0deg);
+  z-index: 51;
+}
+
+.item-7 /* elite_class_3.png */ {
+  position: absolute;
+  left: 77px;
+  top: 1px;
+  width: 329px;
+  height: 86px;
+  transform: scale(0.63) rotate(0deg);
+  z-index: 45;
+}
+
+.item-8 /* player_level.png */ {
+  position: absolute;
+  left: -1px;
+  top: -2px;
+  width: 79px;
+  height: 88px;
+  transform: scale(0.92) rotate(0deg);
+  z-index: 48;
+}
+
+.item-9 /* nickname.png */ {
+  position: absolute;
+  left: 79px;
+  top: 62px;
+  width: 335px;
+  height: 61px;
+  transform: scale(0.62) rotate(0deg);
+  z-index: 44;
+}
+
+.item-10 /* Anime human.png */ {
+  position: absolute;
+  left: 256px;
+  top: 62px;
+  width: 963px;
+  height: 1634px;
+  transform: scale(0.17) rotate(0deg);
+  z-index: 50;
+}
+
