@@ -83,6 +83,10 @@ function animationGlb(pathValue) {
   return pathValue.replace(/animations\/(.+)\.fbx$/u, "animations/$1.glb");
 }
 
+function assetKey(botId, type, name) {
+  return `${botId}_${type}_${name}_v2`;
+}
+
 async function readJson(filePath) {
   return JSON.parse(await readFile(filePath, "utf8"));
 }
@@ -149,6 +153,13 @@ async function rewriteGameManifest() {
     for (const [key, value] of Object.entries(bot.animations)) {
       bot.animations[key] = animationGlb(value);
     }
+
+    bot.cacheKeys = {
+      model: assetKey(bot.id, "model", "runtime"),
+      animations: Object.fromEntries(
+        Object.keys(bot.animations).map((name) => [name, assetKey(bot.id, "animation", name)])
+      )
+    };
   }
 
   await writeJson(manifestPath, manifest);

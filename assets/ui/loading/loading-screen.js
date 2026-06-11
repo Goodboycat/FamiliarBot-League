@@ -31,45 +31,62 @@
       manifest.weaponSwapRules,
       manifest.powerCatalog,
       ...(manifest.bots || []).flatMap((bot) => [
-        bot.model,
+        {
+          path: bot.model,
+          key: bot.cacheKeys?.model
+        },
         bot.power,
         bot.weapon,
         bot.loadout,
-        ...Object.values(bot.animations || {})
+        ...Object.entries(bot.animations || {}).map(([name, path]) => ({
+          path,
+          key: bot.cacheKeys?.animations?.[name]
+        }))
       ])
-    ].filter(Boolean);
+    ]
+      .filter(Boolean)
+      .map((asset) => typeof asset === "string" ? { path: asset } : asset);
   }
 
   async function flattenAssets(config, configPath) {
-    const assets = [config.background].filter(Boolean).map((path) => resolvePath(path, configPath));
+    const assets = [config.background]
+      .filter(Boolean)
+      .map((path) => ({
+        path: resolvePath(path, configPath)
+      }));
 
     for (const group of config.assetGroups || []) {
       if (Array.isArray(group.paths)) {
-        assets.push(...group.paths.map((path) => resolvePath(path, configPath)));
+        assets.push(...group.paths.map((path) => ({
+          path: resolvePath(path, configPath)
+        })));
       }
 
       if (group.manifest) {
         const manifestUrl = resolvePath(group.manifest, configPath);
-        assets.push(manifestUrl);
+        assets.push({ path: manifestUrl });
 
         if (group.id === "game_manifest") {
           const gameManifest = await fetchJson(manifestUrl);
-          assets.push(...collectGameAssets(gameManifest).map((path) => resolvePath(path, manifestUrl)));
+          assets.push(...collectGameAssets(gameManifest).map((asset) => ({
+            ...asset,
+            path: resolvePath(asset.path, manifestUrl)
+          })));
         }
       }
     }
 
-    return [...new Set(assets)];
+    return [...new Map(assets.map((asset) => [asset.key || asset.path, asset])).values()];
   }
 
-  async function preloadAsset(path) {
+  async function preloadAsset(asset) {
     if (window.FamiliarBotAssetCache) {
-      return window.FamiliarBotAssetCache.fetchAsset(path);
+      return window.FamiliarBotAssetCache.fetchAsset(asset.path, { key: asset.key });
     }
 
-    const response = await fetch(path, { cache: "force-cache" });
+    const response = await fetch(asset.path, { cache: "force-cache" });
     if (!response.ok) {
-      throw new Error(`Could not preload ${path}`);
+      throw new Error(`Could not preload ${asset.path}`);
     }
     return response.blob();
   }
@@ -120,7 +137,7 @@
     for (const asset of assets) {
       const result = await preloadAsset(asset);
       loaded += 1;
-      update(`${result?.fromCache ? "Cached" : "Loaded"} ${asset.split("/").pop()}`);
+      update(`${result?.fromCache ? "Cached" : "Loaded"} ${asset.path.split("/").pop()}`);
     }
 
     const minimumMs = (config.minimumDisplaySeconds || 0) * 1000;

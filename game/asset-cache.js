@@ -63,12 +63,31 @@
     return new URL(path, window.location.href).href;
   }
 
-  async function getAsset(path) {
-    return readRecord(normalizeKey(path));
+  async function getAsset(key) {
+    return readRecord(key);
+  }
+
+  async function saveAsset(key, value, options = {}) {
+    const blob = value instanceof Blob ? value : new Blob([value], {
+      type: options.contentType || "application/octet-stream"
+    });
+
+    const record = {
+      blob,
+      contentType: options.contentType || blob.type || "application/octet-stream",
+      savedAt: Date.now(),
+      version: options.version || DB_VERSION
+    };
+
+    if (options.asText) {
+      record.text = await blob.text();
+    }
+
+    return writeRecord(key, record);
   }
 
   async function fetchAsset(path, options = {}) {
-    const key = normalizeKey(path);
+    const key = options.key || normalizeKey(path);
     const cached = await readRecord(key);
 
     if (cached) {
@@ -86,18 +105,10 @@
     }
 
     const blob = await response.blob();
-    const record = {
-      blob,
-      contentType: response.headers.get("content-type") || blob.type || "application/octet-stream",
-      savedAt: Date.now(),
-      version: DB_VERSION
-    };
-
-    if (options.asText) {
-      record.text = await blob.text();
-    }
-
-    await writeRecord(key, record);
+    const record = await saveAsset(key, blob, {
+      asText: options.asText,
+      contentType: response.headers.get("content-type") || blob.type || "application/octet-stream"
+    });
 
     return {
       ...record,
@@ -125,6 +136,7 @@
     fetchJson,
     getAsset,
     getObjectUrl,
-    openDB
+    openDB,
+    saveAsset
   };
 })();

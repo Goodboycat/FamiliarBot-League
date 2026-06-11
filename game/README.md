@@ -18,6 +18,17 @@ For web delivery, bot model and runtime animation FBX files are converted to GLB
 
 Bump `DB_VERSION` in `game/asset-cache.js` when a release needs players to re-download cached assets.
 
+Use `FamiliarBotGLBLoader.loadGLB(url, key)` when code needs a parsed GLB:
+
+```js
+const atlas = await FamiliarBotGLBLoader.loadGLB(
+  "./assets/bots/atlas/model/atlas_all_rounder.glb",
+  "atlas_model_runtime_v2"
+);
+```
+
+The first call downloads and saves the GLB in IndexedDB. Later calls read the cached blob and parse it with `GLTFLoader` when that loader is available.
+
 ## Load Order
 
 1. Show `loadingScreen.config`.

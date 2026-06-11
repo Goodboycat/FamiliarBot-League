@@ -13,11 +13,17 @@
 
   function collectBotFiles(bot) {
     return [
-      bot.model,
+      {
+        path: bot.model,
+        key: bot.cacheKeys?.model
+      },
       bot.power,
       bot.weapon,
       bot.loadout,
-      ...Object.values(bot.animations || {})
+      ...Object.entries(bot.animations || {}).map(([name, path]) => ({
+        path,
+        key: bot.cacheKeys?.animations?.[name]
+      }))
     ];
   }
 
@@ -31,12 +37,14 @@
       manifest.weaponSwapRules,
       manifest.powerCatalog,
       ...manifest.bots.flatMap(collectBotFiles)
-    ];
+    ].map((asset) => typeof asset === "string" ? { path: asset } : asset);
 
     let loaded = 0;
-    for (const file of files) {
+    for (const asset of files) {
+      const file = asset.path;
+
       if (window.FamiliarBotAssetCache) {
-        await window.FamiliarBotAssetCache.fetchAsset(file);
+        await window.FamiliarBotAssetCache.fetchAsset(file, { key: asset.key });
       } else {
         const response = await fetch(file, { cache: "force-cache" });
         if (!response.ok) {
