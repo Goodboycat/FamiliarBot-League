@@ -98,9 +98,24 @@
       };
     }
 
-    const response = await fetch(key, { cache: "force-cache" });
+    let response;
+    try {
+      response = await fetch(key, { cache: "force-cache" });
+    } catch (err) {
+      // Network error / CORS / offline. With bots-not-ready fallback we don't
+      // want one missing asset to abort the whole boot — surface as null.
+      if (options.optional !== false) {
+        console.warn(`[AssetCache] network error for ${path}: ${err.message} — using fallback`);
+        return null;
+      }
+      throw err;
+    }
 
     if (!response.ok) {
+      if (options.optional !== false) {
+        console.warn(`[AssetCache] missing asset (${response.status}): ${path} — using fallback`);
+        return null;
+      }
       throw new Error(`Could not load ${path}`);
     }
 
@@ -117,8 +132,13 @@
     };
   }
 
-  async function fetchJson(path) {
-    const record = await fetchAsset(path, { asText: true });
+  async function fetchJson(path, options = {}) {
+    // JSON configs are required for the screens to render — by default we
+    // still throw if they're missing. Pass { optional: true } for bot-level
+    // JSON files (power.json / weapon.json / loadout.json) that may not
+    // exist yet while the bots are still being built.
+    const record = await fetchAsset(path, { asText: true, optional: options.optional === true });
+    if (!record) return null;
     const text = record.text || await record.blob.text();
 
     return JSON.parse(text);
