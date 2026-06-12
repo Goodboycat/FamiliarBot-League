@@ -79,8 +79,20 @@
     return typeof window.buildTerrain === "function";
   }
 
+  // Per-bot accent colors for the placeholder mech used while bot GLBs
+  // are still being built. Keyed by bot id (lowercase).
+  const BOT_ACCENTS = {
+    atlas:   { body: 0x4a87b8, head: 0x5fa8d8, glow: 0x39f5ff },
+    blaze:   { body: 0xc24a2a, head: 0xff8855, glow: 0xff5522 },
+    bastion: { body: 0x4a5a72, head: 0x7d8aa0, glow: 0xb8c8ff },
+    volt:    { body: 0xb89a3a, head: 0xf2d24a, glow: 0xfff066 },
+    vex:     { body: 0x6a3aa8, head: 0xa258ff, glow: 0xc685ff },
+    sage:    { body: 0x3a8a6a, head: 0x55c089, glow: 0x66ffb2 },
+    bruno:   { body: 0x8a5a2a, head: 0xb88044, glow: 0xff9c4a }
+  };
+
   // -------------------- 3D scene (THREE.js + arena modules) -------------
-  function startThreeScene(canvas) {
+  function startThreeScene(canvas, botId) {
     const THREE = window.THREE;
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
@@ -104,11 +116,14 @@
       console.warn("[Game] buildTerrain failed:", err);
     }
 
-    // A floating placeholder bot in the middle of the arena.
+    // Placeholder bot — used until the per-bot GLB pipeline is delivered
+    // from the asset repo. Colors are tinted from BOT_ACCENTS so the right
+    // bot still feels distinct in the arena.
+    const accent = BOT_ACCENTS[(botId || "").toLowerCase()] || BOT_ACCENTS.atlas;
     const bot = new THREE.Group();
     const bodyGeo = new THREE.BoxGeometry(2.2, 3.4, 1.6);
     const bodyMat = new THREE.MeshStandardMaterial({
-      color: 0x4a87b8, metalness: 0.55, roughness: 0.45,
+      color: accent.body, metalness: 0.55, roughness: 0.45,
       emissive: 0x103040, emissiveIntensity: 0.4
     });
     const body = new THREE.Mesh(bodyGeo, bodyMat);
@@ -117,18 +132,25 @@
 
     const headGeo = new THREE.BoxGeometry(1.2, 1.0, 1.0);
     const headMat = new THREE.MeshStandardMaterial({
-      color: 0x5fa8d8, emissive: 0x39f5ff, emissiveIntensity: 0.8
+      color: accent.head, emissive: accent.glow, emissiveIntensity: 0.8
     });
     const head = new THREE.Mesh(headGeo, headMat);
     head.position.y = 4.4;
     bot.add(head);
 
-    const coreLight = new THREE.PointLight(0x39f5ff, 1.2, 14);
+    const coreLight = new THREE.PointLight(accent.glow, 1.2, 14);
     coreLight.position.set(0, 3.2, 0);
     bot.add(coreLight);
 
     bot.position.set(-60, 0, 0); // player base side
     scene.add(bot);
+
+    // Best-effort attempt to load the real bot GLB if it has been bundled.
+    // We never block the scene on it — the placeholder cube above is the
+    // guaranteed fallback while bot assets are still WIP.
+    tryUpgradeBotMesh(scene, bot, botId, accent).catch((err) => {
+      console.warn("[Game] bot GLB upgrade skipped:", err.message);
+    });
 
     // Orbit-ish auto camera (no controls dependency).
     let t = 0;
@@ -349,7 +371,7 @@
 
     try {
       if (use3D) {
-        sceneCtrl = startThreeScene(canvas);
+        sceneCtrl = startThreeScene(canvas, botId);
       } else {
         sceneCtrl = start2DScene(canvas, display);
       }
@@ -366,6 +388,47 @@
     }, 600);
 
     return { stage, dispose() { sceneCtrl && sceneCtrl.dispose && sceneCtrl.dispose(); } };
+  }
+
+  /**
+   * Best-effort GLB upgrade. If the bot model isn't bundled yet (404)
+   * we silently keep the placeholder cube in place. Never throws.
+   */
+  async function tryUpgradeBotMesh(scene, placeholder, botId, accent) {
+    if (!botId) return;
+    if (!window.FamiliarBotGLBLoader) return;
+    if (!window.THREE) return;
+
+    // Try the locations the game manifest would normally point at.
+    const candidates = [
+      resolve(`../assets/bots/${botId}/model/${botId}.glb`),
+      resolve(`../assets/bots/${botId}/model/${botId}_all_rounder.glb`),
+      resolve(`../assets/bots/${botId}/model/${botId}_fighter.glb`),
+      resolve(`../assets/bots/${botId}/model/${botId}_tank.glb`),
+      resolve(`../assets/bots/${botId}/model/${botId}_speedster.glb`),
+      resolve(`../assets/bots/${botId}/model/${botId}_supporter.glb`),
+      resolve(`../assets/bots/${botId}/model/${botId}_robot_fox.glb`),
+      resolve(`../assets/bots/${botId}/model/${botId}_robotic_bear.glb`)
+    ];
+
+    for (const url of candidates) {
+      let res;
+      try {
+        res = await window.FamiliarBotGLBLoader.loadGLB(url);
+      } catch (err) {
+        continue;
+      }
+      if (!res || res.missing || !res.gltf || !res.gltf.scene) continue;
+
+      const model = res.gltf.scene;
+      model.position.copy(placeholder.position);
+      model.scale.setScalar(2.4);
+      scene.add(model);
+      scene.remove(placeholder);
+      console.log(`[Game] bot model loaded for ${botId}`);
+      return;
+    }
+    // No real model yet — placeholder stays. Nothing else to do.
   }
 
   window.FamiliarBotGame = { start };

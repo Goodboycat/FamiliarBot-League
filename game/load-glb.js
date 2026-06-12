@@ -6,10 +6,17 @@
 
   async function getBufferFromCache(url, key) {
     if (!window.FamiliarBotAssetCache) {
-      const response = await fetch(url);
+      let response;
+      try {
+        response = await fetch(url);
+      } catch (err) {
+        console.warn(`[GLB] network error for ${url}: ${err.message}`);
+        return null;
+      }
 
       if (!response.ok) {
-        throw new Error(`Could not download ${url}`);
+        console.warn(`[GLB] missing model (${response.status}): ${url}`);
+        return null;
       }
 
       return {
@@ -30,10 +37,18 @@
     }
 
     console.log(`Downloading ${cacheKey}...`);
-    const response = await fetch(url);
+    let response;
+    try {
+      response = await fetch(url);
+    } catch (err) {
+      console.warn(`[GLB] network error for ${url}: ${err.message}`);
+      return null;
+    }
 
     if (!response.ok) {
-      throw new Error(`Could not download ${url}`);
+      // Bot model not bundled yet — caller will use placeholder mesh.
+      console.warn(`[GLB] missing model (${response.status}): ${url}`);
+      return null;
     }
 
     const buffer = await response.arrayBuffer();
@@ -68,7 +83,18 @@
   }
 
   async function loadGLB(url, key, options = {}) {
-    const { buffer, fromCache } = await getBufferFromCache(url, key);
+    const result = await getBufferFromCache(url, key);
+    if (!result) {
+      // No buffer — caller is responsible for using a placeholder mesh.
+      return {
+        gltf: null,
+        buffer: null,
+        fromCache: false,
+        key: key || defaultKeyFromUrl(url),
+        missing: true
+      };
+    }
+    const { buffer, fromCache } = result;
     const gltf = await parseGLB(buffer, options);
 
     return {
