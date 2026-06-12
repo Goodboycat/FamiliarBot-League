@@ -27,6 +27,9 @@ async function copyIfExists(source, target) {
 }
 
 async function removeDuplicateWeaponAnimations(dir) {
+  if (!existsSync(dir)) {
+    return;
+  }
   const entries = await readdir(dir, { withFileTypes: true });
 
   for (const entry of entries) {
@@ -44,6 +47,9 @@ async function removeDuplicateWeaponAnimations(dir) {
 }
 
 async function removeFbmFolders(dir) {
+  if (!existsSync(dir)) {
+    return;
+  }
   const entries = await readdir(dir, { withFileTypes: true });
 
   for (const entry of entries) {
