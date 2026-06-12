@@ -12,6 +12,8 @@
   const defaultConfigPath = "./menu_screen.json";
 
   // Icon search order: 1) same folder as menu (menu/), 2) shared icons folder.
+  // Tolerate both the original (typo) name `Menu_blackground.png` and the
+  // canonical `Menu_background.png` by also probing icons/ for either.
   const ICON_SEARCH_FOLDERS = [
     "./",          // assets/ui/menu/
     "../icons/"    // assets/ui/icons/
@@ -119,8 +121,16 @@
     // (background, decorative labels, frames) should not show a pointer
     // cursor or dispatch click events even if they have an entry in
     // ICON_ACTIONS.
+    // The big play CTA — `mech_arena_button.png` — is exported as
+    // `isLocked: true` in the JSON (so the designer doesn't move it),
+    // but we still want it to be clickable at runtime. Treat "play" /
+    // "battle_type" / "customize" as always-clickable regardless of
+    // the lock flag.
     const action = ICON_ACTIONS[item.assetRef];
-    if (action && item.isLocked === false) {
+    const ALWAYS_CLICKABLE = new Set(["play", "battle_type", "customize"]);
+    const clickable = action && (item.isLocked === false || ALWAYS_CLICKABLE.has(action));
+
+    if (clickable) {
       img.dataset.action = action;
       img.style.cursor = "pointer";
       img.addEventListener("click", () => {
@@ -142,6 +152,11 @@
     const configPath = options.configPath || defaultConfigPath;
     const config = await fetchJson(configPath);
     const screenSize = config.screenSize || { width: 844, height: 390 };
+
+    // Switch background music to the menu track.
+    if (window.FamiliarBotAudio) {
+      window.FamiliarBotAudio.play("menu");
+    }
 
     // Resolve every asset URL up-front (parallel).
     const items = config.items || [];
@@ -166,6 +181,20 @@
     });
 
     document.body.appendChild(scene);
+
+    // Wire the "play" action to whatever caller passed in (typically the
+    // garage launcher). We attach this only once per start() — listeners
+    // from a previous run are GC'd when document.body.innerHTML is reset.
+    const handler = (ev) => {
+      const action = ev.detail && ev.detail.action;
+      if (action === "play" && typeof options.onPlay === "function") {
+        options.onPlay(ev.detail);
+      } else if (typeof options.onAction === "function") {
+        options.onAction(ev.detail);
+      }
+    };
+    window.addEventListener("familiarbot:menu-action", handler);
+    scene.__menuActionHandler = handler;
 
     if (typeof options.onReady === "function") {
       options.onReady(scene);
