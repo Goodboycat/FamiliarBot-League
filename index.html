@@ -2,24 +2,92 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>FamiliarBot League</title>
+    <!-- Responsive scaling must load BEFORE the per-screen stylesheets so its
+         html/body resets are not clobbered by a later sheet. -->
+    <link rel="stylesheet" href="./assets/ui/responsive-scene.css">
     <link rel="stylesheet" href="./assets/ui/loading/loading-screen.css">
     <link rel="stylesheet" href="./assets/ui/menu/menu-screen.css">
+    <link rel="stylesheet" href="./assets/ui/garage/garage-screen.css">
+    <link rel="stylesheet" href="./game/game-screen.css">
   </head>
   <body>
+    <!-- Shared audio manager: handles loading/menu/garage/arena tracks
+         with crossfade and an autoplay-unlock on first user gesture. -->
+    <script src="./assets/audio/audio-manager.js"></script>
+
+    <!-- Responsive scaler — wraps every scene so the 844x390 design footprint
+         fits any mobile or PC viewport. Must load before the screen scripts. -->
+    <script src="./assets/ui/responsive-scene.js"></script>
+
+    <!-- Asset cache + GLB loader (existing modules) -->
     <script src="./game/asset-cache.js"></script>
     <script src="./game/load-glb.js"></script>
+
+    <!-- Screens -->
     <script src="./assets/ui/loading/loading-screen.js"></script>
     <script src="./assets/ui/menu/menu-screen.js"></script>
+    <script src="./assets/ui/garage/garage-screen.js"></script>
+    <script src="./game/game-screen.js"></script>
+
     <script>
+      /**
+       * Flow:  loading  ->  menu  ->  garage  ->  game
+       *                              ^             |
+       *                              └──── back ───┘
+       *
+       * Each screen also instructs FamiliarBotAudio to switch to its track
+       * (Loading_background_music / Menu_background_music /
+       *  Garage_background_music / Arena_background_music).
+       */
+      function showMenu() {
+        FamiliarBotMainMenu.start({
+          configPath: "./assets/ui/menu/menu_screen.json",
+          onPlay() {
+            // Mech-arena button → garage
+            showGarage();
+          },
+          onAction(detail) {
+            // Other menu actions are stubbed for now.
+            console.log("[App] Menu action (no handler yet):", detail.action);
+          }
+        });
+      }
+
+      function showGarage(selectedBotId) {
+        FamiliarBotGarage.start({
+          configPath: "./assets/ui/garage/garage_screen.json",
+          selectedBotId: selectedBotId,
+          onBack() { showMenu(); },
+          onDeploy(botId, ctx) {
+            const bot = (ctx && ctx.config && ctx.config.bots || [])
+              .find((b) => b.id === botId);
+            showGame({
+              botId,
+              displayName: bot ? bot.displayName : botId,
+              role:        bot ? bot.role        : ""
+            });
+          }
+        });
+      }
+
+      function showGame(opts) {
+        FamiliarBotGame.start({
+          botId:       opts.botId,
+          displayName: opts.displayName,
+          role:        opts.role,
+          onExit() { showGarage(opts.botId); },
+          onHome() { showMenu(); }
+        });
+      }
+
+      // Kick off: loading screen → menu.
       FamiliarBotLoadingScreen.start({
         configPath: "./assets/ui/loading/loading_screen.json",
-        onReady() {
-          FamiliarBotMainMenu.start({
-            configPath: "./assets/ui/menu/menu_screen.json"
-          });
-        }
+        onReady() { showMenu(); }
       });
     </script>
   </body>
