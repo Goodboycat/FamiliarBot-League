@@ -1,11 +1,48 @@
+/**
+ * FamiliarBot League — Main Menu renderer.
+ *
+ * Reads `menu_screen.json` (the exported layout from the menu designer) and
+ * renders every item as an absolutely-positioned <img> on top of the
+ * background. Icon source files live either next to this script
+ * (assets/ui/menu/) or in the shared icons folder (assets/ui/icons/).
+ *
+ * After the loading screen finishes, `FamiliarBotMainMenu.start()` is called.
+ */
 (function () {
-  const configPath = "./menu_screen.json";
+  const defaultConfigPath = "./menu_screen.json";
+
+  // Icon search order: 1) same folder as menu (menu/), 2) shared icons folder.
+  const ICON_SEARCH_FOLDERS = [
+    "./",          // assets/ui/menu/
+    "../icons/"    // assets/ui/icons/
+  ];
+
+  // Map of menu item assetRef → semantic id used for click routing.
+  // (Matches the icon PNGs shipped in assets/ui/icons/.)
+  const ICON_ACTIONS = {
+    "mech_arena_button.png": "play",
+    "mech_arena_label.png":  "play",
+    "battle_type.png":       "battle_type",
+    "customize.png":         "customize",
+    "settings.png":          "settings",
+    "home.png":              "home",
+    "friends.png":           "friends",
+    "missions.png":          "missions",
+    "mail.png":              "mail",
+    "rank.png":              "rank",
+    "bond_badge.png":        "bond",
+    "customization_scene.png": "customize",
+    "plus.png":              "plus"
+  };
 
   function resolvePath(path, basePath) {
     return new URL(path, new URL(basePath, window.location.href)).href;
   }
 
   async function fetchJson(path) {
+    if (window.FamiliarBotAssetCache) {
+      return window.FamiliarBotAssetCache.fetchJson(path);
+    }
     const response = await fetch(path);
     if (!response.ok) {
       throw new Error(`Could not load ${path}`);
@@ -13,107 +50,128 @@
     return response.json();
   }
 
-  function panelTemplate(id, config, manifest, weapons) {
-    if (id === "play") {
-      return `
-        <p class="panel-kicker">Arena Ready</p>
-        <h2 class="panel-title">${manifest.displayName}</h2>
-        <p class="panel-copy">Choose your bot, swap weapons, and enter the arena after the loading screen has prepared every asset.</p>
-        <div class="play-actions">
-          <button class="primary-action" type="button">Start Match</button>
-          <button class="secondary-action" type="button">Training</button>
-        </div>
-      `;
-    }
-
-    if (id === "weapons") {
-      return `
-        <p class="panel-kicker">Loadout</p>
-        <h2 class="panel-title">Weapons</h2>
-        <div class="weapon-grid">
-          ${weapons.map((weapon) => `
-            <article class="weapon-card">
-              <h3>${weapon.displayName}</h3>
-              <p>${weapon.type.replaceAll("_", " ")} · ${weapon.defaultSocket.replaceAll("_", " ")}</p>
-            </article>
-          `).join("")}
-        </div>
-      `;
-    }
-
-    if (id === "settings") {
-      return `
-        <p class="panel-kicker">Options</p>
-        <h2 class="panel-title">Settings</h2>
-        <div class="settings-row">
-          <h3>Game Asset Loader</h3>
-          <p>Loading screen, bot roster, weapons, powers, and loadouts are connected through game/game_assets.json.</p>
-        </div>
-      `;
-    }
-
-    return `
-      <p class="panel-kicker">Roster</p>
-      <h2 class="panel-title">Bots</h2>
-      <div class="bot-grid">
-        ${manifest.bots.map((bot) => `
-          <article class="bot-card">
-            <h3>${bot.displayName}</h3>
-            <p>${bot.role.replaceAll("_", " ")} · ${bot.id}</p>
-          </article>
-        `).join("")}
-      </div>
-    `;
+  /**
+   * Resolve an assetRef (a bare PNG filename) against the configured search
+   * folders. Returns the first URL that actually exists.
+   *
+   * Uses an <img> probe rather than fetch(HEAD) because many static hosts
+   * (and file://) either disallow HEAD or return a non-ok status for it,
+   * which previously caused every asset to fall back to the wrong folder.
+   */
+  function probeImage(url) {
+    return new Promise((resolve) => {
+      const probe = new Image();
+      probe.onload = () => resolve(true);
+      probe.onerror = () => resolve(false);
+      probe.src = url;
+    });
   }
 
-  function setActive(buttons, activeId) {
-    buttons.forEach((button) => {
-      button.classList.toggle("is-active", button.dataset.panel === activeId);
-    });
+  async function resolveAssetUrl(assetRef, basePath) {
+    for (const folder of ICON_SEARCH_FOLDERS) {
+      const candidate = resolvePath(folder + assetRef, basePath);
+      // eslint-disable-next-line no-await-in-loop
+      if (await probeImage(candidate)) return candidate;
+    }
+    // Fallback: return the menu-folder path even if missing, so the broken
+    // <img> is visible in dev tools rather than silently dropped.
+    return resolvePath(ICON_SEARCH_FOLDERS[0] + assetRef, basePath);
+  }
+
+  /**
+   * Build one <img> element from an items[] entry. The CSS file already has
+   * `.item-N` rules that match the same index, so we just need the index +
+   * the resolved src. We also write inline left/top/width/height so the
+   * layout works even if the CSS file fails to load.
+   */
+  function buildItemImage(item, index, assetUrl, screenSize) {
+    const img = document.createElement("img");
+    img.className = `menu-item item-${index}`;
+    img.src = assetUrl;
+    img.alt = item.assetRef || `menu item ${index}`;
+    img.draggable = false;
+
+    // Inline fallback positioning derived directly from the JSON.
+    // The designer exports x/y as top-left positions, so we must pin
+    // transform-origin to top-left for EVERY item — even when scale === 1 —
+    // otherwise rotation (or any later CSS) would pivot around the center
+    // and visually shift the element.
+    img.style.position = "absolute";
+    img.style.left = `${item.x}px`;
+    img.style.top = `${item.y}px`;
+    img.style.transformOrigin = "top left";
+
+    const transforms = [];
+    if (typeof item.scale === "number" && item.scale !== 1) {
+      transforms.push(`scale(${item.scale})`);
+    }
+    if (typeof item.rotation === "number" && item.rotation !== 0) {
+      transforms.push(`rotate(${item.rotation}deg)`);
+    }
+    if (transforms.length) {
+      img.style.transform = transforms.join(" ");
+    }
+    if (typeof item.zIndex === "number") {
+      img.style.zIndex = String(item.zIndex);
+    }
+
+    // Only wire interactivity for items that are NOT locked. Locked items
+    // (background, decorative labels, frames) should not show a pointer
+    // cursor or dispatch click events even if they have an entry in
+    // ICON_ACTIONS.
+    const action = ICON_ACTIONS[item.assetRef];
+    if (action && item.isLocked === false) {
+      img.dataset.action = action;
+      img.style.cursor = "pointer";
+      img.addEventListener("click", () => {
+        const event = new CustomEvent("familiarbot:menu-action", {
+          detail: { action, assetRef: item.assetRef, item }
+        });
+        window.dispatchEvent(event);
+        console.log(`[Menu] action: ${action} (${item.assetRef})`);
+      });
+    } else if (item.isLocked === false) {
+      // Unlocked but unmapped — still hint that it's interactive.
+      img.style.cursor = "pointer";
+    }
+
+    return img;
   }
 
   async function start(options = {}) {
-    const activeConfigPath = options.configPath || configPath;
-    const config = await fetchJson(activeConfigPath);
-    const manifestPath = resolvePath(config.gameManifest, activeConfigPath);
-    const manifest = await fetchJson(manifestPath);
-    const weapons = await fetchJson(resolvePath(manifest.weaponCatalog, manifestPath));
+    const configPath = options.configPath || defaultConfigPath;
+    const config = await fetchJson(configPath);
+    const screenSize = config.screenSize || { width: 844, height: 390 };
 
-    document.body.innerHTML = `
-      <main class="main-menu">
-        <div class="menu-shell">
-          <aside class="menu-nav">
-            <div class="menu-brand">
-              <h1>${manifest.displayName}</h1>
-              <p>${manifest.bots.length} bots loaded from GitHub assets</p>
-            </div>
-            <nav class="menu-buttons" aria-label="Main menu">
-              ${config.buttons.map((button) => `
-                <button class="menu-button" type="button" data-panel="${button.id}">${button.label}</button>
-              `).join("")}
-            </nav>
-            <div class="menu-footer">Assets linked through game manifest</div>
-          </aside>
-          <section class="menu-content">
-            <div class="menu-panel"></div>
-          </section>
-        </div>
-      </main>
-    `;
+    // Resolve every asset URL up-front (parallel).
+    const items = config.items || [];
+    const urls = await Promise.all(
+      items.map((item) => resolveAssetUrl(item.assetRef, configPath))
+    );
 
-    const panel = document.querySelector(".menu-panel");
-    const buttons = [...document.querySelectorAll(".menu-button")];
+    // Replace the (loading-screen) body content with the menu scene.
+    document.body.innerHTML = "";
+    document.body.classList.add("familiarbot-menu-active");
 
-    const showPanel = (id) => {
-      panel.innerHTML = panelTemplate(id, config, manifest, weapons);
-      setActive(buttons, id);
-    };
+    const scene = document.createElement("div");
+    scene.className = "game-scene main-menu-scene";
+    scene.style.position = "relative";
+    scene.style.width = `${screenSize.width}px`;
+    scene.style.height = `${screenSize.height}px`;
+    scene.style.margin = "0 auto";
+    scene.style.overflow = "hidden";
 
-    buttons.forEach((button) => {
-      button.addEventListener("click", () => showPanel(button.dataset.panel));
+    items.forEach((item, index) => {
+      scene.appendChild(buildItemImage(item, index, urls[index], screenSize));
     });
 
-    showPanel(config.defaultPanel || "bots");
+    document.body.appendChild(scene);
+
+    if (typeof options.onReady === "function") {
+      options.onReady(scene);
+    }
+
+    return scene;
   }
 
   window.FamiliarBotMainMenu = { start };
