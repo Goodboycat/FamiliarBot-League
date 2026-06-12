@@ -113,7 +113,13 @@
     }
 
     // Replace whatever was on the page (menu) with the garage scene.
-    document.body.innerHTML = "";
+    // Use the shared responsive scaler so the garage also adapts to
+    // mobile and desktop viewports.
+    if (window.FamiliarBotResponsive) {
+      window.FamiliarBotResponsive.reset();
+    } else {
+      document.body.innerHTML = "";
+    }
     document.body.classList.remove("familiarbot-menu-active");
     document.body.classList.add("familiarbot-garage-active");
 
@@ -236,7 +242,11 @@
     deployBar.appendChild(deployWrap);
     scene.appendChild(deployBar);
 
-    document.body.appendChild(scene);
+    if (window.FamiliarBotResponsive) {
+      window.FamiliarBotResponsive.mount(scene);
+    } else {
+      document.body.appendChild(scene);
+    }
 
     // ---- Selection logic ----
     function selectBot(id) {
