@@ -27,6 +27,10 @@ body {
   background:
     linear-gradient(180deg, rgba(3, 10, 18, 0.18), rgba(3, 10, 18, 0.84)),
     url("./loading_background_robot_1280.jpg") center / cover no-repeat;
+  /* Keep the loading screen above the (initially empty) .fb-viewport
+   * wrapper that the responsive scaler injects. The menu screen will
+   * reset the body and re-mount itself inside the scaler. */
+  z-index: 10;
 }
 
 .loading-screen::before {
