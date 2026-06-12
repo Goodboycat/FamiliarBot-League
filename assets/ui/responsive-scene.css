@@ -1,0 +1,83 @@
+/* ============================================================
+ * FamiliarBot League — Responsive Scene Scaling
+ *
+ * The game is designed at a fixed landscape footprint (844 x 390).
+ * Rather than redo every absolutely-positioned coordinate for every
+ * screen size, we scale the entire scene to fit the viewport while
+ * preserving the design ratio. This works for:
+ *   - Mobile portrait
+ *   - Mobile landscape
+ *   - Tablet
+ *   - Desktop / PC (any resolution)
+ *
+ * The scaling is done via CSS transform on a wrapper, and JavaScript
+ * recomputes the scale on resize / orientation change.
+ * ============================================================ */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+}
+
+body {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The viewport wrapper takes the entire screen and centers the scene. */
+.fb-viewport {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #000;
+  z-index: 0;
+}
+
+/* The scaler is the actual transform target. We keep its natural size
+ * (844 x 390) and apply a transform: scale(N) to fit it inside the
+ * viewport. Using a wrapper around the scaled element keeps layout
+ * predictable in flex containers. */
+.fb-scaler {
+  position: relative;
+  width: 844px;
+  height: 390px;
+  transform-origin: center center;
+  /* Default scale; JS overrides this on resize. */
+  transform: scale(1);
+  flex: 0 0 auto;
+}
+
+/* When a scene is rendered inside the scaler, it should fill it. */
+.fb-scaler > .game-scene,
+.fb-scaler > .garage-scene,
+.fb-scaler > .loading-screen {
+  position: absolute !important;
+  inset: 0 !important;
+  margin: 0 !important;
+  width: 844px !important;
+  height: 390px !important;
+}
+
+/* The loading screen uses position: fixed; inside the scaler we want it
+ * to behave as an absolutely-positioned overlay instead. */
+.fb-scaler > .loading-screen {
+  position: absolute !important;
+}
+
+/* Keep all menu/garage interactive items above any decorative chrome. */
+.fb-scaler .menu-item,
+.fb-scaler [class*="item-"] {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
