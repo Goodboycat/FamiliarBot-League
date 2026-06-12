@@ -10,13 +10,17 @@
     return Math.max(0, Math.min(100, Math.round((loaded / total) * 100)));
   }
 
-  async function fetchJson(path) {
+  async function fetchJson(path, options = {}) {
     if (window.FamiliarBotAssetCache) {
-      return window.FamiliarBotAssetCache.fetchJson(path);
+      return window.FamiliarBotAssetCache.fetchJson(path, options);
     }
 
     const response = await fetch(path);
     if (!response.ok) {
+      if (options.optional) {
+        console.warn(`[Loading] optional JSON missing: ${path}`);
+        return null;
+      }
       throw new Error(`Could not load ${path}`);
     }
     return response.json();
@@ -64,14 +68,26 @@
 
       if (group.manifest) {
         const manifestUrl = resolvePath(group.manifest, configPath);
-        assets.push({ path: manifestUrl });
+        assets.push({ path: manifestUrl, optional: true });
 
         if (group.id === "game_manifest") {
-          const gameManifest = await fetchJson(manifestUrl);
-          assets.push(...collectGameAssets(gameManifest).map((asset) => ({
-            ...asset,
-            path: resolvePath(asset.path, manifestUrl)
-          })));
+          // Bot assets are still being built — try to read the game manifest,
+          // but if it isn't bundled yet (or any sub-asset 404s during the
+          // load loop below), we just skip them and the game falls back to
+          // its built-in placeholder bots/arena.
+          let gameManifest = null;
+          try {
+            gameManifest = await fetchJson(manifestUrl, { optional: true });
+          } catch (err) {
+            console.warn("[Loading] game manifest not available yet:", err.message);
+          }
+          if (gameManifest) {
+            assets.push(...collectGameAssets(gameManifest).map((asset) => ({
+              ...asset,
+              path: resolvePath(asset.path, manifestUrl),
+              optional: true
+            })));
+          }
         }
       }
     }
@@ -80,15 +96,27 @@
   }
 
   async function preloadAsset(asset) {
-    if (window.FamiliarBotAssetCache) {
-      return window.FamiliarBotAssetCache.fetchAsset(asset.path, { key: asset.key });
-    }
+    // Treat every asset as optional while bot assets are still WIP. A 404
+    // on a single bot model / animation / music track shouldn't block the
+    // loading screen from completing.
+    try {
+      if (window.FamiliarBotAssetCache) {
+        return await window.FamiliarBotAssetCache.fetchAsset(asset.path, {
+          key: asset.key,
+          optional: true
+        });
+      }
 
-    const response = await fetch(asset.path, { cache: "force-cache" });
-    if (!response.ok) {
-      throw new Error(`Could not preload ${asset.path}`);
+      const response = await fetch(asset.path, { cache: "force-cache" });
+      if (!response.ok) {
+        console.warn(`[Loading] skipping missing asset (${response.status}): ${asset.path}`);
+        return null;
+      }
+      return await response.blob();
+    } catch (err) {
+      console.warn(`[Loading] skipping asset ${asset.path}: ${err.message}`);
+      return null;
     }
-    return response.blob();
   }
 
   function createLoadingScreen(config) {
@@ -118,6 +146,12 @@
     const startedAt = performance.now();
     const configPath = options.configPath || defaultConfigPath;
     const config = options.config || await fetchJson(configPath);
+
+    // Switch background music to the loading track. The audio manager
+    // queues this until the first user gesture if autoplay is blocked.
+    if (window.FamiliarBotAudio) {
+      window.FamiliarBotAudio.play("loading");
+    }
     const root = options.root || createLoadingScreen(config);
     const fill = root.querySelector(".loading-progress-fill");
     const step = root.querySelector(".loading-step");
@@ -137,7 +171,12 @@
     for (const asset of assets) {
       const result = await preloadAsset(asset);
       loaded += 1;
-      update(`${result?.fromCache ? "Cached" : "Loaded"} ${asset.path.split("/").pop()}`);
+      const name = asset.path.split("/").pop();
+      if (!result) {
+        update(`Skipped ${name}`);
+      } else {
+        update(`${result.fromCache ? "Cached" : "Loaded"} ${name}`);
+      }
     }
 
     const minimumMs = (config.minimumDisplaySeconds || 0) * 1000;
