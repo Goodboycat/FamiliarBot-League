@@ -15,20 +15,21 @@
     return response.json();
   }
 
-  function collectBotFiles(bot) {
-    return [
-      {
-        path: bot.model,
-        key: bot.cacheKeys?.model
-      },
-      bot.power,
-      bot.weapon,
-      bot.loadout,
-      ...Object.entries(bot.animations || {}).map(([name, path]) => ({
-        path,
-        key: bot.cacheKeys?.animations?.[name]
-      }))
-    ];
+  // Bot model / animation binaries (.fbx / .glb) and per-bot json sidecars
+  // are NOT preloaded yet — those files are still WIP. The game uses its
+  // runtime fallbacks (placeholder cube, CSS silhouette) until they ship.
+  // Returning an empty list here keeps the loader from spamming 404s and
+  // wasting bandwidth on files that the runtime won't use.
+  function collectBotFiles(_bot) {
+    return [];
+  }
+
+  const SKIP_EXTENSIONS = [".fbx", ".glb", ".gltf"];
+
+  function shouldSkipAsset(asset) {
+    if (!asset || !asset.path) return true;
+    const lower = String(asset.path).toLowerCase().split("?")[0];
+    return SKIP_EXTENSIONS.some((ext) => lower.endsWith(ext));
   }
 
   async function loadGameAssets(manifestPath = "./game_assets.json", onProgress) {
@@ -51,7 +52,8 @@
       ...((manifest.bots || []).flatMap(collectBotFiles))
     ]
       .filter(Boolean)
-      .map((asset) => typeof asset === "string" ? { path: asset } : asset);
+      .map((asset) => typeof asset === "string" ? { path: asset } : asset)
+      .filter((asset) => !shouldSkipAsset(asset));
 
     let loaded = 0;
     for (const asset of files) {
