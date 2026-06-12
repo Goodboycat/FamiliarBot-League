@@ -31,6 +31,13 @@ body {
    * wrapper that the responsive scaler injects. The menu screen will
    * reset the body and re-mount itself inside the scaler. */
   z-index: 10;
+  opacity: 1;
+  transition: opacity 280ms ease;
+}
+
+.loading-screen--dismissed {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .loading-screen::before {

@@ -26,6 +26,11 @@
     return response.json();
   }
 
+  // Only the lightweight top-level manifests are preloaded from the game
+  // manifest. Per-bot binary assets (.fbx / .glb) and per-bot json sidecars
+  // (power / weapon / loadout) are intentionally skipped at the loading
+  // screen — they aren't ready yet and would either 404 or crash the game.
+  // The runtime fallbacks in game-screen.js / garage-screen.js take over.
   function collectGameAssets(manifest) {
     return [
       manifest.loadingScreen?.config,
@@ -33,23 +38,22 @@
       manifest.roster,
       manifest.weaponCatalog,
       manifest.weaponSwapRules,
-      manifest.powerCatalog,
-      ...(manifest.bots || []).flatMap((bot) => [
-        {
-          path: bot.model,
-          key: bot.cacheKeys?.model
-        },
-        bot.power,
-        bot.weapon,
-        bot.loadout,
-        ...Object.entries(bot.animations || {}).map(([name, path]) => ({
-          path,
-          key: bot.cacheKeys?.animations?.[name]
-        }))
-      ])
+      manifest.powerCatalog
     ]
       .filter(Boolean)
       .map((asset) => typeof asset === "string" ? { path: asset } : asset);
+  }
+
+  // Files we never want to preload at the loading screen, regardless of
+  // where in the manifest tree they came from. Bot models / animations are
+  // not bundled yet and would crash the game on download — the fallbacks
+  // (placeholder cube + CSS silhouette) cover us until they arrive.
+  const SKIP_EXTENSIONS = [".fbx", ".glb", ".gltf"];
+
+  function shouldSkipAsset(asset) {
+    if (!asset || !asset.path) return true;
+    const lower = String(asset.path).toLowerCase().split("?")[0];
+    return SKIP_EXTENSIONS.some((ext) => lower.endsWith(ext));
   }
 
   async function flattenAssets(config, configPath) {
@@ -92,7 +96,13 @@
       }
     }
 
-    return [...new Map(assets.map((asset) => [asset.key || asset.path, asset])).values()];
+    const deduped = [...new Map(assets.map((asset) => [asset.key || asset.path, asset])).values()];
+    const filtered = deduped.filter((asset) => !shouldSkipAsset(asset));
+    const skipped = deduped.length - filtered.length;
+    if (skipped > 0) {
+      console.info(`[Loading] skipping ${skipped} bot model/animation file(s) (.fbx/.glb) — not bundled yet, runtime fallback will be used.`);
+    }
+    return filtered;
   }
 
   async function preloadAsset(asset) {
@@ -186,6 +196,23 @@
     }
 
     update("Ready");
+
+    // Tear down the loading screen so the next screen (menu) is visible.
+    // The loading-screen <section> is fixed + z-index:10 — leaving it in
+    // the DOM (which the original implementation did) just covers the
+    // menu, so the user sees a 100%-full bar while menu music plays.
+    function dismiss() {
+      if (!root || !root.parentNode) return;
+      root.classList.add("loading-screen--dismissed");
+      // Fade out, then remove. CSS transition is ~280ms; remove after 320ms.
+      setTimeout(() => {
+        if (root.parentNode) {
+          root.parentNode.removeChild(root);
+        }
+      }, 320);
+    }
+
+    dismiss();
 
     if (typeof options.onReady === "function") {
       options.onReady(root);
