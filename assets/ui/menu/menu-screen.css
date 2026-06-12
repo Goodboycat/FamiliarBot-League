@@ -4,6 +4,21 @@
   width: 844px;
   height: 390px;
   overflow: hidden;
+  /* User-select disabled so dragging the menu does not select text. */
+  -webkit-user-select: none;
+          user-select: none;
+}
+
+/* The unite-battle CTA and any other interactive menu items must live
+ * above decorative chrome — the JSON-exported z-indexes put decorative
+ * items (anime human, vertical container, frames) above the play button,
+ * which means a transparent PNG corner can swallow taps on touchscreens.
+ * Forcing the action items above the chrome (combined with
+ * pointer-events: none on the locked items in JS) makes the unite
+ * button reliably clickable on every device. */
+.menu-item[data-action] {
+  z-index: 1000 !important;
+  pointer-events: auto !important;
 }
 
 /*
@@ -58,14 +73,16 @@
   z-index: 15;
 }
 
-.item-4 /* mech_arena_button.png */ {
+.item-4 /* mech_arena_button.png — UNITE BATTLE CTA */ {
   position: absolute;
   left: 590px;
   top: 301px;
   width: 339px;
   height: 108px;
   transform: scale(0.84) rotate(0deg);
-  z-index: 14;
+  /* Bumped from 14 → 1000 so decorative items can never block taps. */
+  z-index: 1000;
+  cursor: pointer;
 }
 
 .item-5 /* customize.png */ {

@@ -133,16 +133,38 @@
     if (clickable) {
       img.dataset.action = action;
       img.style.cursor = "pointer";
-      img.addEventListener("click", () => {
+      img.style.pointerEvents = "auto";
+      // touch-action: manipulation removes the 300ms tap delay on mobile
+      // and prevents double-tap zoom from swallowing the click.
+      img.style.touchAction = "manipulation";
+
+      const dispatch = (ev) => {
+        if (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+        }
         const event = new CustomEvent("familiarbot:menu-action", {
           detail: { action, assetRef: item.assetRef, item }
         });
         window.dispatchEvent(event);
         console.log(`[Menu] action: ${action} (${item.assetRef})`);
+      };
+      img.addEventListener("click", dispatch);
+      // Also listen for pointerup so taps register reliably on touch
+      // screens even if the browser fails to synthesise a click event
+      // (which can happen when a scroll/zoom gesture is partially detected).
+      img.addEventListener("pointerup", (ev) => {
+        if (ev.pointerType === "touch") dispatch(ev);
       });
     } else if (item.isLocked === false) {
       // Unlocked but unmapped — still hint that it's interactive.
       img.style.cursor = "pointer";
+    } else {
+      // Locked decorative items (background, character, frames, labels)
+      // must NEVER intercept pointer events — otherwise they can sit on
+      // top of the unite button and silently swallow taps because the
+      // PNG transparency is opaque to the hit-test.
+      img.style.pointerEvents = "none";
     }
 
     return img;
@@ -164,8 +186,15 @@
       items.map((item) => resolveAssetUrl(item.assetRef, configPath))
     );
 
-    // Replace the (loading-screen) body content with the menu scene.
-    document.body.innerHTML = "";
+    // Reset the body (was showing the loading screen) and prepare for
+    // the menu. The responsive helper owns the .fb-viewport / .fb-scaler
+    // wrapper that scales the 844x390 design footprint to any device.
+    if (window.FamiliarBotResponsive) {
+      window.FamiliarBotResponsive.reset();
+    } else {
+      document.body.innerHTML = "";
+    }
+    document.body.classList.remove("familiarbot-garage-active");
     document.body.classList.add("familiarbot-menu-active");
 
     const scene = document.createElement("div");
@@ -173,14 +202,18 @@
     scene.style.position = "relative";
     scene.style.width = `${screenSize.width}px`;
     scene.style.height = `${screenSize.height}px`;
-    scene.style.margin = "0 auto";
+    scene.style.margin = "0";
     scene.style.overflow = "hidden";
 
     items.forEach((item, index) => {
       scene.appendChild(buildItemImage(item, index, urls[index], screenSize));
     });
 
-    document.body.appendChild(scene);
+    if (window.FamiliarBotResponsive) {
+      window.FamiliarBotResponsive.mount(scene);
+    } else {
+      document.body.appendChild(scene);
+    }
 
     // Wire the "play" action to whatever caller passed in (typically the
     // garage launcher). We attach this only once per start() — listeners
