@@ -1,0 +1,150 @@
+/* ============================================================
+ * FamiliarBot League — Game/Arena scene styling
+ * The Three.js canvas fills the 844x390 stage; HUD overlays on top.
+ * ============================================================ */
+.familiarbot-game-active {
+  margin: 0;
+  background: #05080f;
+  color: #e8f2ff;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.game-stage {
+  position: relative;
+  width: 844px;
+  height: 390px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #06090f;
+  border-radius: 6px;
+  box-shadow: 0 0 30px rgba(57,245,255,0.18);
+}
+.game-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* HUD */
+.game-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+.game-hud-top {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: auto;
+}
+.game-hud-bot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.game-hud-bot-name {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: #c8eaff;
+  text-shadow: 0 0 8px rgba(57,245,255,0.6);
+}
+.game-hud-bot-role {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #8db5d8;
+  text-transform: uppercase;
+}
+.game-hud-buttons {
+  display: flex;
+  gap: 6px;
+}
+.game-hud-button {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 6px 10px;
+  border: 1px solid rgba(57,245,255,0.5);
+  background: rgba(10,20,36,0.6);
+  color: #c8eaff;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background 120ms;
+}
+.game-hud-button:hover { background: rgba(57,245,255,0.15); }
+.game-hud-button.danger { border-color: rgba(255,90,140,0.6); color: #ffc8d6; }
+.game-hud-button.danger:hover { background: rgba(255,90,140,0.18); }
+
+.game-hud-banner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 8px;
+  color: #ffffff;
+  text-shadow: 0 0 18px rgba(57,245,255,0.9);
+  pointer-events: none;
+  opacity: 0;
+  animation: game-banner-flash 2.2s ease-out forwards;
+}
+@keyframes game-banner-flash {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+  20%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  80%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+.game-hud-bottom {
+  position: absolute;
+  bottom: 8px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  pointer-events: auto;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #8db5d8;
+}
+.game-hud-tip {
+  background: rgba(10,20,36,0.55);
+  padding: 4px 8px;
+  border-radius: 2px;
+}
+
+.game-loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle, rgba(10,20,36,0.85), #05080f 80%);
+  color: #c8eaff;
+  z-index: 30;
+  letter-spacing: 4px;
+  font-weight: 700;
+  font-size: 14px;
+}
+.game-loading-overlay .spinner {
+  width: 36px; height: 36px;
+  border: 3px solid rgba(57,245,255,0.25);
+  border-top-color: #39f5ff;
+  border-radius: 50%;
+  margin-bottom: 14px;
+  animation: game-spin 1s linear infinite;
+}
+@keyframes game-spin { to { transform: rotate(360deg); } }
