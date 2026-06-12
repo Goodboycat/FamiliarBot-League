@@ -1,0 +1,48 @@
+{
+  "id": "main_garage_screen",
+  "displayName": "FamiliarBot League — Garage",
+  "orientation": "landscape",
+  "screenSize": {
+    "width": 844,
+    "height": 390
+  },
+  "background": {
+    "color1": "#0a1424",
+    "color2": "#13283f",
+    "color3": "#06090f"
+  },
+  "bots": [
+    { "id": "atlas",   "displayName": "Atlas",   "role": "All-Rounder" },
+    { "id": "blaze",   "displayName": "Blaze",   "role": "Fighter"     },
+    { "id": "bastion", "displayName": "Bastion", "role": "Tank"        },
+    { "id": "volt",    "displayName": "Volt",    "role": "Sniper"      },
+    { "id": "vex",     "displayName": "Vex",     "role": "Assassin"    },
+    { "id": "sage",    "displayName": "Sage",    "role": "Support"     },
+    { "id": "bruno",   "displayName": "Bruno",   "role": "Brawler"     }
+  ],
+  "defaultBotId": "atlas",
+  "labels": {
+    "title": "GARAGE",
+    "subtitle": "Select your FamiliarBot",
+    "backButton": "← MAIN MENU",
+    "deployButton": "DEPLOY",
+    "deploySubLabel": "Enter the Arena"
+  },
+  "panels": {
+    "stats": [
+      { "key": "hp",      "label": "HP",      "max": 100 },
+      { "key": "damage",  "label": "DAMAGE",  "max": 100 },
+      { "key": "speed",   "label": "SPEED",   "max": 100 },
+      { "key": "defense", "label": "DEFENSE", "max": 100 }
+    ]
+  },
+  "botStats": {
+    "atlas":   { "hp": 70, "damage": 70, "speed": 60, "defense": 65 },
+    "blaze":   { "hp": 55, "damage": 90, "speed": 70, "defense": 45 },
+    "bastion": { "hp": 95, "damage": 60, "speed": 35, "defense": 95 },
+    "volt":    { "hp": 50, "damage": 85, "speed": 60, "defense": 40 },
+    "vex":     { "hp": 50, "damage": 80, "speed": 95, "defense": 35 },
+    "sage":    { "hp": 60, "damage": 45, "speed": 70, "defense": 70 },
+    "bruno":   { "hp": 80, "damage": 80, "speed": 55, "defense": 75 }
+  }
+}

@@ -1,0 +1,414 @@
+/* ============================================================
+ * FamiliarBot League — Garage screen
+ * Landscape 844 x 390. Same target footprint as menu / loading.
+ * ============================================================ */
+
+.familiarbot-garage-active {
+  margin: 0;
+  background: #05080f;
+  color: #e8f2ff;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.garage-scene {
+  position: relative;
+  width: 844px;
+  height: 390px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 6px;
+  /* Animated holographic-hangar gradient. */
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 30%, rgba(57,245,255,0.18), transparent 70%),
+    radial-gradient(ellipse 90% 60% at 50% 100%, rgba(255,90,140,0.16), transparent 70%),
+    linear-gradient(180deg, #0a1424 0%, #13283f 55%, #06090f 100%);
+  box-shadow: inset 0 0 80px rgba(0,0,0,0.55);
+}
+
+/* Animated grid floor */
+.garage-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(57,245,255,0.10) 1px, transparent 1px) 0 0 / 40px 40px,
+    linear-gradient(90deg, rgba(57,245,255,0.10) 1px, transparent 1px) 0 0 / 40px 40px;
+  transform: perspective(420px) rotateX(58deg) translateY(80px) scale(1.6);
+  transform-origin: 50% 100%;
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 35%, #000 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 35%, #000 100%);
+  animation: garage-grid-scroll 6s linear infinite;
+}
+@keyframes garage-grid-scroll {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 0 40px, 40px 0; }
+}
+
+/* Title bar */
+.garage-titlebar {
+  position: absolute;
+  top: 10px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 30;
+}
+.garage-title {
+  font-size: 22px;
+  letter-spacing: 6px;
+  font-weight: 800;
+  color: #e8f2ff;
+  text-shadow: 0 0 14px rgba(57,245,255,0.6);
+}
+.garage-subtitle {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #8db5d8;
+  text-transform: uppercase;
+}
+.garage-back {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 6px 12px;
+  border: 1px solid rgba(57,245,255,0.6);
+  background: rgba(10,20,36,0.6);
+  color: #c8eaff;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background 120ms, transform 120ms;
+}
+.garage-back:hover {
+  background: rgba(57,245,255,0.15);
+  transform: translateX(-2px);
+}
+
+/* Bot picker (left rail) */
+.garage-roster {
+  position: absolute;
+  left: 16px;
+  top: 60px;
+  bottom: 60px;
+  width: 170px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  padding-right: 4px;
+  z-index: 20;
+}
+.garage-bot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  background: linear-gradient(90deg, rgba(20,40,70,0.7), rgba(20,40,70,0.3));
+  border-left: 3px solid rgba(57,245,255,0.4);
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms, transform 120ms;
+  user-select: none;
+}
+.garage-bot:hover {
+  background: linear-gradient(90deg, rgba(40,80,120,0.85), rgba(20,40,70,0.5));
+  transform: translateX(2px);
+}
+.garage-bot.is-selected {
+  background: linear-gradient(90deg, rgba(57,245,255,0.25), rgba(20,40,70,0.6));
+  border-left-color: #39f5ff;
+  box-shadow: inset 0 0 12px rgba(57,245,255,0.3);
+}
+.garage-bot-thumb {
+  width: 30px;
+  height: 30px;
+  background: radial-gradient(circle, #39f5ff 0%, #1a4a72 60%, #06090f 100%);
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+}
+.garage-bot-thumb::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  background: rgba(255,255,255,0.85);
+  border-radius: 50%;
+  filter: blur(2px);
+}
+.garage-bot-name {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #e8f2ff;
+}
+.garage-bot-role {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #8db5d8;
+  text-transform: uppercase;
+}
+.garage-bot-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+/* Bot stage (center) */
+.garage-stage {
+  position: absolute;
+  left: 200px;
+  right: 230px;
+  top: 60px;
+  bottom: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 15;
+}
+.garage-podium {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 240px;
+  height: 30px;
+  background: radial-gradient(ellipse at center, rgba(57,245,255,0.4) 0%, transparent 70%);
+  pointer-events: none;
+}
+.garage-bot-figure {
+  position: relative;
+  width: 150px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 24px rgba(57,245,255,0.7));
+  animation: garage-float 3.6s ease-in-out infinite;
+}
+@keyframes garage-float {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-10px); }
+}
+/* Stylized mech silhouette built from pseudo-elements (no PNG required) */
+.garage-mech {
+  position: relative;
+  width: 90px;
+  height: 160px;
+}
+.garage-mech-head {
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 36px; height: 32px;
+  background: linear-gradient(180deg, #5fa8d8, #2a4f74);
+  border: 2px solid #c8eaff;
+  border-radius: 6px 6px 4px 4px;
+  box-shadow: 0 0 14px rgba(57,245,255,0.7);
+}
+.garage-mech-head::after {
+  content: "";
+  position: absolute;
+  top: 10px; left: 6px; right: 6px;
+  height: 6px;
+  background: #39f5ff;
+  border-radius: 2px;
+  box-shadow: 0 0 10px #39f5ff;
+}
+.garage-mech-torso {
+  position: absolute;
+  top: 30px; left: 50%;
+  transform: translateX(-50%);
+  width: 76px; height: 70px;
+  background: linear-gradient(180deg, #4a87b8, #1e3a58);
+  border: 2px solid #c8eaff;
+  border-radius: 10px 10px 6px 6px;
+  box-shadow: 0 0 18px rgba(57,245,255,0.5), inset 0 0 12px rgba(0,0,0,0.4);
+}
+.garage-mech-torso::after {
+  content: "";
+  position: absolute;
+  top: 20px; left: 50%;
+  transform: translateX(-50%);
+  width: 26px; height: 26px;
+  background: radial-gradient(circle, #39f5ff 0%, #2a6494 60%, transparent 80%);
+  border-radius: 50%;
+  animation: garage-core-pulse 2s ease-in-out infinite;
+}
+@keyframes garage-core-pulse {
+  0%,100% { opacity: 0.7; transform: translateX(-50%) scale(1); }
+  50%     { opacity: 1;   transform: translateX(-50%) scale(1.15); }
+}
+.garage-mech-arm {
+  position: absolute;
+  top: 38px;
+  width: 12px; height: 50px;
+  background: linear-gradient(180deg, #4a87b8, #1e3a58);
+  border: 2px solid #c8eaff;
+  border-radius: 4px;
+}
+.garage-mech-arm.left  { left: -6px; }
+.garage-mech-arm.right { right: -6px; }
+.garage-mech-leg {
+  position: absolute;
+  top: 100px;
+  width: 18px; height: 60px;
+  background: linear-gradient(180deg, #4a87b8, #14283d);
+  border: 2px solid #c8eaff;
+  border-radius: 4px 4px 6px 6px;
+}
+.garage-mech-leg.left  { left: 18px; }
+.garage-mech-leg.right { right: 18px; }
+
+.garage-bot-label {
+  margin-top: 6px;
+  text-align: center;
+  z-index: 2;
+}
+.garage-bot-label .name {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(57,245,255,0.7);
+}
+.garage-bot-label .role {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #8db5d8;
+  text-transform: uppercase;
+}
+
+/* Stats panel (right) */
+.garage-stats {
+  position: absolute;
+  right: 16px;
+  top: 60px;
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: linear-gradient(180deg, rgba(20,40,70,0.85), rgba(10,20,36,0.7));
+  border: 1px solid rgba(57,245,255,0.35);
+  border-radius: 4px;
+  box-shadow: inset 0 0 14px rgba(0,0,0,0.4);
+  z-index: 20;
+}
+.garage-stats-title {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: #c8eaff;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  text-align: center;
+}
+.garage-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.garage-stat-label {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #8db5d8;
+  width: 60px;
+  text-transform: uppercase;
+}
+.garage-stat-track {
+  position: relative;
+  flex: 1;
+  height: 8px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(57,245,255,0.25);
+  border-radius: 1px;
+}
+.garage-stat-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: linear-gradient(90deg, #39f5ff, #c8eaff);
+  box-shadow: 0 0 6px rgba(57,245,255,0.7);
+  border-radius: 1px;
+  transition: width 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.garage-stat-value {
+  font-size: 10px;
+  font-weight: 700;
+  color: #e8f2ff;
+  width: 24px;
+  text-align: right;
+}
+
+/* Deploy bar */
+.garage-deploy-bar {
+  position: absolute;
+  left: 200px;
+  right: 230px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 25;
+}
+.garage-deploy {
+  position: relative;
+  padding: 12px 36px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: #06090f;
+  background: linear-gradient(180deg, #39f5ff 0%, #1aa3b8 100%);
+  border: 2px solid #c8eaff;
+  border-radius: 2px;
+  cursor: pointer;
+  box-shadow: 0 0 24px rgba(57,245,255,0.6), inset 0 0 12px rgba(255,255,255,0.4);
+  transition: transform 120ms, box-shadow 120ms, filter 120ms;
+}
+.garage-deploy:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 0 34px rgba(57,245,255,0.9), inset 0 0 14px rgba(255,255,255,0.6);
+  filter: brightness(1.08);
+}
+.garage-deploy:active {
+  transform: translateY(1px) scale(0.99);
+}
+.garage-deploy-sub {
+  margin-top: 6px;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #8db5d8;
+  text-align: center;
+  text-transform: uppercase;
+}
+.garage-deploy-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Optional volume / mute icon (top-right inside title bar) */
+.garage-audio-toggle {
+  margin-left: 8px;
+  font-size: 14px;
+  padding: 4px 8px;
+  background: rgba(10,20,36,0.6);
+  border: 1px solid rgba(57,245,255,0.4);
+  color: #c8eaff;
+  cursor: pointer;
+  border-radius: 2px;
+}
+.garage-audio-toggle:hover { background: rgba(57,245,255,0.15); }
+
+/* Roster scrollbar */
+.garage-roster::-webkit-scrollbar { width: 4px; }
+.garage-roster::-webkit-scrollbar-thumb {
+  background: rgba(57,245,255,0.4);
+  border-radius: 2px;
+}
+.garage-roster::-webkit-scrollbar-track { background: transparent; }
