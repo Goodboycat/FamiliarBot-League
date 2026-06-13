@@ -1,72 +1,91 @@
 /**
- * TERRAIN INDEX — Orchestrates the full "Restival" 5v5 MOBA arena.
+ * TERRAIN INDEX — Orchestrates the "Restival" 5v5 MOBA arena.
+ *
+ * As of the Opal Battlefield update, the visual base of the arena is loaded
+ * from `assets/opal_battlefield.glb` instead of being assembled from the
+ * legacy procedural modules (floor, perimeter-wall, glow-pools, jungle-bushes,
+ * walls, pillars, altar). Those modules still ship in the project so they
+ * can be re-enabled per-scene if the GLB fails to load — see USE_OPAL_GLB.
+ *
+ * Gameplay overlays kept on top of the GLB:
+ *   • Capture point indicators (5 per side) — drive capture progress visuals
+ *   • Spawn pads (player/enemy) — animated team-colored hex pads
+ *
+ * Collision still keys off TERRAIN coordinates (walls, pillars, altar,
+ * capture-point bases), so movement code continues to work unchanged.
  *
  * Call buildTerrain(scene) after the Three.js scene + lights exist.
- * Returns { update(dt), stats } — stats includes triangle count + draw call
- * estimate (computed at build time, logged once to console).
+ * Returns { update(dt), stats }.
  */
 
+const USE_OPAL_GLB = true;
+
 function buildTerrain(scene) {
-  // 1. Floor (rounded-rect slab + rim + lanes + center line)
-  const floor = buildFloor(scene);
+  let glbBattlefield = null;
+  let altar = null;
 
-  // 2. Perimeter crenellated wall (instanced merlons)
-  const perimeter = (typeof buildPerimeterWall === 'function')
-    ? buildPerimeterWall(scene) : { group: null, merlonCount: 0 };
+  if (USE_OPAL_GLB && typeof buildOpalBattlefield === 'function') {
+    // ---- New GLB-based battlefield ----
+    glbBattlefield = buildOpalBattlefield(scene, (info) => {
+      // Recompute stats once the GLB has finished loading so the console
+      // tally reflects the real triangle count.
+      const stats = computeArenaStats(scene);
+      const b = TERRAIN.budget;
+      const tag = stats.tris <= b.maxTris && stats.drawCalls <= b.maxDrawCalls ? '✓' : '⚠';
+      console.log(
+        `[Arena] ${tag} ${stats.tris} tris / ${stats.drawCalls} draw calls ` +
+        `(budget: ${b.maxTris} tris, ${b.maxDrawCalls} calls). Source: Opal Battlefield GLB.`
+      );
+    });
+  } else {
+    // ---- Legacy procedural fallback ----
+    buildFloor(scene);
+    if (typeof buildPerimeterWall === 'function') buildPerimeterWall(scene);
+    if (typeof buildGlowPools     === 'function') buildGlowPools(scene);
+    if (typeof buildJungleBushes  === 'function') buildJungleBushes(scene);
+    altar = buildAltar(scene);
+    window._altarGroup = altar.group;
+    const pillars = buildPillars(scene);
+    window._pillarGroup = pillars.group;
+    const walls = buildWalls(scene);
+    window._wallMeshes = walls.meshes;
+  }
 
-  // 3. Glow pools under the central jungle clusters
-  const pools = (typeof buildGlowPools === 'function')
-    ? buildGlowPools(scene) : { group: null };
-
-  // 4. Jungle bushes (instanced)
-  const bushes = (typeof buildJungleBushes === 'function')
-    ? buildJungleBushes(scene) : { group: null, count: 0 };
-
-  // 5. Central RESTIVAL altar
-  const altar = buildAltar(scene);
-  window._altarGroup = altar.group;
-
-  // 6. Capture points (5 per side, instanced)
+  // ---- Gameplay overlays (always built — they drive capture / spawn visuals) ----
   buildCapturePoints(scene);
-
-  // 7. Pillars (instanced)
-  const pillars = buildPillars(scene);
-  window._pillarGroup = pillars.group;
-
-  // 8. Inner walls (instanced)
-  const walls = buildWalls(scene);
-  window._wallMeshes = walls.meshes;
-
-  // 9. Spawn pads (2 hex pads, per team)
   const spawn = buildSpawnPads(scene);
   window._spawnPads = spawn;
 
-  // 10. Atmosphere — single hemi + single directional sun = mobile-safe
-  scene.background = new THREE.Color(TERRAIN.palette.void);
-  if (scene.fog) {
-    scene.fog.color = new THREE.Color(0x07101c);
-    scene.fog.density = 0.009;
+  // ---- Atmosphere (only set here when running the legacy path; the GLB
+  // module manages its own lights). ----
+  if (!glbBattlefield) {
+    scene.background = new THREE.Color(TERRAIN.palette.void);
+    if (scene.fog) {
+      scene.fog.color = new THREE.Color(0x07101c);
+      scene.fog.density = 0.009;
+    }
+    const hemi = new THREE.HemisphereLight(0xbfd6ff, 0x1a1326, 0.55);
+    scene.add(hemi);
+    const sun = new THREE.DirectionalLight(0xfff1c2, 0.5);
+    sun.position.set(40, 90, 30);
+    scene.add(sun);
   }
-  const hemi = new THREE.HemisphereLight(0xbfd6ff, 0x1a1326, 0.55);
-  scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xfff1c2, 0.5);
-  sun.position.set(40, 90, 30);
-  scene.add(sun);
 
-  // --- triangle / draw call accounting ---
+  // --- triangle / draw call accounting (initial snapshot) ---
   const stats = computeArenaStats(scene);
   if (typeof window !== 'undefined' && window.console) {
     const b = TERRAIN.budget;
     const tag = stats.tris <= b.maxTris && stats.drawCalls <= b.maxDrawCalls ? '✓' : '⚠';
+    const src = glbBattlefield ? 'Opal Battlefield GLB (loading…)' : 'procedural';
     console.log(
       `[Arena] ${tag} ${stats.tris} tris / ${stats.drawCalls} draw calls ` +
-      `(budget: ${b.maxTris} tris, ${b.maxDrawCalls} calls). ` +
-      `Bushes: ${bushes.count}, Merlons: ${perimeter.merlonCount}.`,
+      `(budget: ${b.maxTris} tris, ${b.maxDrawCalls} calls). Source: ${src}.`
     );
   }
 
   function update(dt) {
-    altar.update(dt);
+    if (glbBattlefield && glbBattlefield.update) glbBattlefield.update(dt);
+    if (altar) altar.update(dt);
     spawn.update(dt);
   }
 
@@ -75,10 +94,6 @@ function buildTerrain(scene) {
 
 /**
  * Walk the scene graph and tally per-mesh triangles + a draw-call estimate.
- * - Instanced meshes count as 1 draw call (regardless of instance count).
- * - Regular meshes count as 1 draw call.
- * - Lines / points / lights are ignored for the draw-call estimate (they cost,
- *   but cheaply on mobile compared to opaque meshes).
  */
 function computeArenaStats(scene) {
   let tris = 0;
@@ -104,18 +119,19 @@ function computeArenaStats(scene) {
 
 /**
  * Unified terrain collision — call from movement code (player + AI).
- * Pushes `pos` out of walls, pillars, altar, and base towers.
+ * Pushes `pos` out of walls, pillars, altar, and base towers. These work
+ * off TERRAIN coordinates directly, so they remain valid even when the
+ * legacy meshes are replaced by the GLB battlefield.
  */
 function terrainCollide(pos, radius) {
   if (typeof collideWithWalls         === 'function') collideWithWalls(pos, radius);
   if (typeof collideWithPillars       === 'function') collideWithPillars(pos, radius);
-  if (typeof collideWithAltar         === 'function') collideWithAltar(pos, radius);
+  if (typeof collideWithAltar         === 'function' && window._altarGroup) collideWithAltar(pos, radius);
   if (typeof collideWithCaptureTowers === 'function') collideWithCaptureTowers(pos, radius);
 }
 
 /**
  * Rounded-rectangle clamp to keep things inside the field.
- * Overrides the global clampToArena used by player.js + ai.js.
  */
 function clampToArenaRect(pos) {
   const T = TERRAIN;

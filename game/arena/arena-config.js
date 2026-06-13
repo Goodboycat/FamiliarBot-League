@@ -155,6 +155,13 @@ if (typeof ARENA !== 'undefined') {
   ARENA.cornerRadius = TERRAIN.cornerRadius;
 }
 
+// Ensure CAPTURE_POINTS exists before the arena modules read it. The wider
+// game runtime owns the gameplay-state array, but when the arena is loaded
+// in isolation (e.g. dev / preview / minimal flow) the global may not be
+// declared yet. Auto-create it here so `buildCapturePoints` never crashes.
+if (typeof window !== 'undefined' && typeof window.CAPTURE_POINTS === 'undefined') {
+  window.CAPTURE_POINTS = [];
+}
 if (typeof CAPTURE_POINTS !== 'undefined') {
   CAPTURE_POINTS.length = 0;
   TERRAIN.capturePoints.forEach(cp => {
