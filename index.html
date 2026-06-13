@@ -36,12 +36,18 @@
     <script>
       /**
        * Flow:  loading  ->  menu  ->  garage  ->  game
-       *                              ^             |
-       *                              └──── back ───┘
+       *          ^                    ^             |
+       *          |                    └─ back ──────┤
+       *          └─── win / defeat / stalemate ─────┘
        *
        * Each screen also instructs FamiliarBotAudio to switch to its track
        * (Loading_background_music / Menu_background_music /
        *  Garage_background_music / Arena_background_music).
+       *
+       * When a match ends, the victory / defeat screen's CONTINUE button
+       * returns the player to the MAIN MENU (via onHome). The garage
+       * back-button still goes menu, and the in-arena exit (onExit)
+       * still drops back to the garage for quick re-deploy.
        */
       function showMenu() {
         FamiliarBotMainMenu.start({
