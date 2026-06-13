@@ -123,6 +123,23 @@
   `;
 
   const RESPONSIVE_CSS = `
+  /* ---- Multi-touch surface ----
+     The whole stage owns its touches; the input patch decides which
+     finger spawns the joystick (left half) and which one drags the
+     camera (right half). */
+  .game-stage { touch-action: none; -webkit-user-select: none; user-select: none; }
+  .game-stage .moba-stick {
+    /* Hidden by default — the input patch shows it under the user's
+       finger on a left-half touch. The legacy fixed bottom-left dock
+       is gone. */
+    display: none !important;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .game-stage .moba-stick.fb-active { display: flex !important; }
+  /* Joystick arrows are noise once the ring spawns under the finger. */
+  .game-stage .moba-stick .arrows { display: none; }
+
   /* ---- Mobile-landscape fit ----
      The responsive-scene.js scaler uses Math.min(sx,sy). On a narrow
      landscape phone (≈ 740×340 visible) the scaler under-uses the

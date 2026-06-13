@@ -28,7 +28,18 @@
  *     mesh is ALWAYS visible. Pending VFX particles whose burst center is
  *     outside the frustum are skipped at spawn time too.
  *
- *  C) Back-face removal on bot meshes.
+ *  C) Fog-of-war vision rules (NEW 2026 patch).
+ *     Ally bots reappear whenever they are inside the camera frustum.
+ *     Enemy bots stay hidden EVEN when on-screen unless either:
+ *       (a) the player is within PLAYER_VISION_R world units of the enemy
+ *           (player acts as a pinpoint, range matches camera distance), or
+ *       (b) at least one living ally bot within ALLY_VISION_R world units
+ *           of the enemy is itself on-screen (allies pinpoint at screen-
+ *           distance).
+ *     Spotted enemies are flagged with `._spotted = true` so the minimap
+ *     can mirror the same fog-of-war.
+ *
+ *  D) Back-face removal on bot meshes.
  *     Pokémon Unite skips drawing the half of each mech that the camera
  *     can't see (it saves a meaningful amount of fragment work on phones).
  *     We toggle `material.side = THREE.FrontSide` and `frustumCulled = true`
@@ -148,6 +159,13 @@
     // AFTER scaleTerrain ran. Nothing to fix.
   }
 
+  // -------- C) fog-of-war vision ranges --------------------------------
+  // World units. ALLY_VISION_R ≈ a Pokémon-Unite "screen-radius" around
+  // each ally; PLAYER_VISION_R is the camera-distance equivalent around
+  // the player. Tweak together to widen/narrow team vision.
+  const ALLY_VISION_R   = 16;
+  const PLAYER_VISION_R = 24;
+
   // -------- B) off-camera frustum culling ------------------------------
   function attachToWorld(scene, camera, world, vfx) {
     if (!camera || !world) return;
@@ -222,6 +240,11 @@
   /**
    * Per-frame visibility pass. Hides bot / wild / boss groups whose world
    * position is outside the camera frustum. The player mesh is force-on.
+   *
+   * Enemies additionally need a "spotter" — either the player within
+   * PLAYER_VISION_R, or an on-screen ally within ALLY_VISION_R. Spotted
+   * enemies are tagged `._spotted = true` so the minimap can match the
+   * fog-of-war.
    */
   function tick(_dt) {
     const cam = NS._camera, world = NS._world;
@@ -229,18 +252,50 @@
     NS._projMat.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
     NS._frustum.setFromProjectionMatrix(NS._projMat);
 
+    function inFrustum(a) {
+      NS._tmpSph.center.set(a.x, 1.5, a.z);
+      NS._tmpSph.radius = 3.5;
+      return NS._frustum.intersectsSphere(NS._tmpSph);
+    }
     function maybeHide(a, alwaysShow) {
       if (!a || !a.mesh) return;
       if (!a.alive) { a.mesh.visible = false; return; }
       if (alwaysShow) { a.mesh.visible = true; return; }
-      NS._tmpSph.center.set(a.x, 1.5, a.z);
-      NS._tmpSph.radius = 3.5;
-      a.mesh.visible = NS._frustum.intersectsSphere(NS._tmpSph);
+      a.mesh.visible = inFrustum(a);
     }
 
     if (world.player) maybeHide(world.player, true);
     (world.allyBots   || []).forEach((a) => maybeHide(a, false));
-    (world.enemyBots  || []).forEach((a) => maybeHide(a, false));
+
+    // ----- fog-of-war: enemies need a spotter ------------------------
+    const player = world.player;
+    const visibleAllies = (world.allyBots || []).filter(
+      (a) => a && a.alive && a.mesh && a.mesh.visible
+    );
+    const playerR2 = PLAYER_VISION_R * PLAYER_VISION_R;
+    const allyR2   = ALLY_VISION_R   * ALLY_VISION_R;
+    (world.enemyBots || []).forEach((e) => {
+      if (!e || !e.mesh) return;
+      if (!e.alive) { e.mesh.visible = false; e._spotted = false; return; }
+      // First: is the enemy inside the camera frustum at all?
+      if (!inFrustum(e)) { e.mesh.visible = false; e._spotted = false; return; }
+      // Then: is anyone spotting them?
+      let spotted = false;
+      if (player && player.alive) {
+        const dx = e.x - player.x, dz = e.z - player.z;
+        if (dx * dx + dz * dz <= playerR2) spotted = true;
+      }
+      if (!spotted) {
+        for (let i = 0; i < visibleAllies.length; i++) {
+          const a = visibleAllies[i];
+          const dx = e.x - a.x, dz = e.z - a.z;
+          if (dx * dx + dz * dz <= allyR2) { spotted = true; break; }
+        }
+      }
+      e._spotted = spotted;
+      e.mesh.visible = spotted;
+    });
+
     (world.wildRobots || []).forEach((a) => maybeHide(a, false));
     (world.bosses     || []).forEach((a) => maybeHide(a, false));
     if (world.megaBoss) {

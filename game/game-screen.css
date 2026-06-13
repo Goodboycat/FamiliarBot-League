@@ -24,6 +24,11 @@
   background: #06090f;
   border-radius: 6px;
   box-shadow: 0 0 30px rgba(57,245,255,0.18);
+  /* Multi-touch: tell the browser we manage all gestures ourselves
+     (no scroll-to-pan, no pinch-zoom on the canvas). */
+  touch-action: none;
+  -webkit-user-select: none;
+          user-select: none;
 }
 .game-stage canvas {
   display: block;
@@ -231,17 +236,25 @@
 }
 .moba-sig:hover { background: rgba(57,245,255,0.18); }
 
-/* ---- JOYSTICK ---- */
+/* ---- JOYSTICK ----
+   The joystick is now spawn-on-touch (Pokémon-Unite-style). The input
+   patch (`game-input.js`) shows it under the user's finger on left-half
+   touches and hides it on touchend. Default state: hidden. */
 .moba-stick {
   position: absolute;
+  /* placeholder default so the legacy desktop fallback still has a
+     visible joystick when the input patch isn't loaded — the patch
+     immediately sets display:none and repositions it on touch. */
   left: 18px; bottom: 18px;
   width: 100px; height: 100px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(10,20,36,0.5), rgba(10,20,36,0.85));
-  border: 1px solid rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.25);
   display: flex; align-items: center; justify-content: center;
   user-select: none;
   touch-action: none;
+  pointer-events: none;        /* events handled by FamiliarBotInput */
+  z-index: 5;
 }
 .moba-stick .ring {
   position: absolute; inset: 8px;
