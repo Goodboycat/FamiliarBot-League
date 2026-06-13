@@ -20,8 +20,13 @@
  */
 (function () {
   const THREE_CDN = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+  // NOTE: opal-battlefield.js loads the new GLB-based battlefield and is the
+  // primary visual source for the arena. The legacy procedural modules
+  // (floor, perimeter-wall, glow-pools, jungle-bushes, walls, pillars, altar)
+  // are still loaded so collision helpers and the fallback path keep working.
   const ARENA_SCRIPTS = [
     "./arena/arena-config.js",
+    "./arena/opal-battlefield.js",
     "./arena/floor.js",
     "./arena/perimeter-wall.js",
     "./arena/glow-pools.js",
