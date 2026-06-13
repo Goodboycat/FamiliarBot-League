@@ -2,17 +2,23 @@
  * FamiliarBot League — Three.js scene + player input + render loop.
  *
  * Exposes:
- *   window.startMobaThreeScene(canvas, ctx, hud) -> { dispose, world }
+ *   window.startMobaThreeScene(canvas, ctx, hud)
+ *     -> { dispose, world, scene, camera, renderer }
  *
  * Builds the renderer / camera / lights, calls buildTerrain() to set up the
  * GLB-based opal battlefield + capture point overlays, then creates the
  * MOBA world via createMobaWorld() and wires the player's HUD controls to
- * the world systems. The per-frame tick handles:
- *   • player movement & arena clamping
- *   • auto-capture when standing on a circle
- *   • basic / power / unite / eject inputs
- *   • camera follow
- *   • HUD updates (timer, level, cooldowns, portraits, minimap)
+ * the world systems.
+ *
+ * UPDATE — June 2026:
+ *   • The returned controller now exposes `scene`, `camera`, and `renderer`
+ *     so the sibling patch modules (game-visuals.js, game-performance.js)
+ *     can hook the active scene without re-discovering it.
+ *   • Player arena clamps now read FamiliarBotGamePerformance.arenaClamp
+ *     (which tracks TERRAIN.fieldW / fieldD) so the larger battlefield
+ *     scaled by game-performance.js is reachable.
+ *   • The render loop calls FamiliarBotGamePerformance.tick(dt) on every
+ *     frame to drive off-camera actor culling.
  */
 (function (global) {
 
@@ -23,12 +29,16 @@
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     renderer.setPixelRatio(global.devicePixelRatio || 1);
     renderer.setSize(w, h, false);
+    // Shadows OFF — the visuals patch will also enforce this, but set it
+    // up front so any module that asks for renderer.shadowMap.enabled at
+    // creation time sees `false`.
+    renderer.shadowMap.enabled = false;
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x07101c);
     scene.fog = new THREE.FogExp2(0x07101c, 0.008);
 
-    const camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 800);
+    const camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 1200);
     camera.position.set(0, 80, 90);
     camera.lookAt(0, 0, 0);
 
@@ -37,6 +47,7 @@
     scene.add(new THREE.AmbientLight(0x88aacc, 0.5));
     const dir = new THREE.DirectionalLight(0xffffff, 0.9);
     dir.position.set(60, 100, 40);
+    dir.castShadow = false;
     scene.add(dir);
 
     // Build the arena (GLB battlefield + capture pad + spawn pad overlays).
@@ -71,7 +82,11 @@
           const dd = (e.x - player.x) * (e.x - player.x) + (e.z - player.z) * (e.z - player.z);
           if (dd < bd) { bd = dd; best = e; }
         }
-        if (best && bd < 18 * 18) world.fireBasicAttack(player, best);
+        // Basic-attack range scales with the battlefield (×2 by default).
+        const scale = (global.FamiliarBotGamePerformance &&
+                       global.FamiliarBotGamePerformance._scale) || 1;
+        const range = 18 * scale;
+        if (best && bd < range * range) world.fireBasicAttack(player, best);
       } else if (id === 'p1' || id === 'p2') {
         const idx = id === 'p1' ? 0 : 1;
         const slot = player.powers[idx];
@@ -93,7 +108,10 @@
             const dd = (cp.x - player.x) * (cp.x - player.x) + (cp.z - player.z) * (cp.z - player.z);
             if (dd < bd) { bd = dd; best = cp; }
           }
-          if (best && bd < 14 * 14) {
+          const scale = (global.FamiliarBotGamePerformance &&
+                         global.FamiliarBotGamePerformance._scale) || 1;
+          const range = 14 * scale;
+          if (best && bd < range * range) {
             for (let i = 0; i < 6; i++) world.captureProgress(best, player, 0.18);
             player.stats.scored += 6;
             vfx.burst({
@@ -144,6 +162,21 @@
     let lastTs = performance.now();
     let fpsTimer = 0, fpsCount = 0, fpsValue = 60;
 
+    function getArenaClamp() {
+      // Prefer the live values exposed by the performance patch (which
+      // tracks the scaled TERRAIN). Fall back to a sensible default for
+      // the legacy 162 × 90 footprint.
+      const perf = global.FamiliarBotGamePerformance;
+      if (perf && perf.arenaClamp) return perf.arenaClamp;
+      return { hx: 86, hz: 44 };
+    }
+
+    // Camera follow distance also scales with the battlefield.
+    function getCamScale() {
+      return (global.FamiliarBotGamePerformance &&
+              global.FamiliarBotGamePerformance._scale) || 1;
+    }
+
     function tick(now) {
       if (stopped) return;
       const dt = Math.min(0.05, (now - lastTs) / 1000);
@@ -161,9 +194,10 @@
         const sp = player.speed;
         player.x += mv.x * sp * dt;
         player.z += mv.y * sp * dt;
-        // clamp to arena
-        player.x = Math.max(-86, Math.min(86, player.x));
-        player.z = Math.max(-44, Math.min(44, player.z));
+        // clamp to arena (dynamic — works with both legacy and scaled fields)
+        const c = getArenaClamp();
+        player.x = Math.max(-c.hx, Math.min(c.hx, player.x));
+        player.z = Math.max(-c.hz, Math.min(c.hz, player.z));
         if (mv.x || mv.y) player.facing = Math.atan2(mv.y, mv.x);
 
         // Auto-score when standing in any capture circle
@@ -193,11 +227,18 @@
       // ---- VFX
       vfx.update(dt);
 
-      // ---- camera follow (top-down with offset)
+      // ---- camera follow (top-down with offset) — scales with arena
+      const cs = getCamScale();
       camera.position.x = player.x;
-      camera.position.z = player.z + 55;
-      camera.position.y = 65;
+      camera.position.z = player.z + 55 * cs;
+      camera.position.y = 65 * cs;
       camera.lookAt(player.x, 0, player.z);
+
+      // ---- off-camera culling pass (sibling perf module)
+      if (global.FamiliarBotGamePerformance &&
+          typeof global.FamiliarBotGamePerformance.tick === 'function') {
+        global.FamiliarBotGamePerformance.tick(dt);
+      }
 
       // ---- HUD updates
       const secLeft = Math.max(0, world.durationSec - world.time);
@@ -245,7 +286,10 @@
       stopped = true;
       try { renderer.dispose(); } catch (_e) {}
     }
-    return { dispose, world };
+
+    // Expose scene / camera / renderer so the sibling patch modules
+    // (visuals + performance) can hook them after the world is built.
+    return { dispose, world, scene, camera, renderer, vfx };
   }
 
   global.startMobaThreeScene = startMobaThreeScene;

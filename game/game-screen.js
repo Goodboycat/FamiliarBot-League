@@ -1,16 +1,30 @@
 /**
  * FamiliarBot League — Game / Arena scene launcher (entry).
  *
- * Public API (unchanged):
+ * Public API (UNCHANGED):
  *   FamiliarBotGame.start({ botId, displayName, role, onExit, onHome })
  *
- * This file used to contain the whole MOBA implementation (~1100 lines). It
- * has been split into focused modules; this file only wires them together:
+ * index.html still only needs to include this file — the entry lazily
+ * loads everything else (Three.js, arena, MOBA, sibling patch modules)
+ * at startup, in dependency order.
+ *
+ * File layout:
  *
  *   game/game-screen.js   — entry / public API / module loading  (this file)
  *   game/game-roster.js   — fallback names + per-team roster picker
  *   game/game-world.js    — createWorld(): actors, combat, capture, XP, AI tick
  *   game/game-scene.js    — startThreeScene(): renderer, camera, player input, loop
+ *
+ *   PATCH MODULES (NEW, sibling to this file — loaded at startup in order):
+ *     game/game-visuals.js        — kills shadows, brightens lighting, safe toon
+ *     game/game-performance.js    — 2× battlefield, off-camera culling, back-face cull
+ *     game/game-ui-layout.js      — clustered ability buttons + mobile-landscape fit
+ *
+ * The patch modules MUST load in this order:
+ *
+ *   1) game-performance.js  — must scale TERRAIN BEFORE arena scripts read it
+ *   2) game-visuals.js      — applied to renderer + scene after they exist
+ *   3) game-ui-layout.js    — applied to HUD overlay after HUD is built
  *
  * Music still routes through FamiliarBotAudio.play('game') so the arena
  * track keeps playing.
@@ -45,6 +59,16 @@
     "./game-roster.js",
     "./game-world.js",
     "./game-scene.js"
+  ];
+
+  // NEW: sibling patch modules. Order matters — performance.js mutates the
+  // TERRAIN config BEFORE the arena scripts read it, visuals.js needs the
+  // renderer/scene from startMobaThreeScene, and ui-layout.js needs the
+  // HUD DOM tree from buildMobaHud.
+  const PATCH_SCRIPTS = [
+    "./game-performance.js",
+    "./game-visuals.js",
+    "./game-ui-layout.js"
   ];
 
   const scriptEl = document.currentScript ||
@@ -130,23 +154,61 @@
 
     document.body.appendChild(stage);
 
+    // Mount inside the responsive scaler so the 844×390 design footprint
+    // always fits the viewport (incl. mobile landscape) — the ui-layout
+    // patch module fine-tunes the per-element sizing once it's loaded.
+    if (window.FamiliarBotResponsive &&
+        typeof window.FamiliarBotResponsive.mount === 'function') {
+      window.FamiliarBotResponsive.mount(stage);
+    }
+
     requestAnimationFrame(() => {
       canvas.width = canvas.clientWidth;
       canvas.height = canvas.clientHeight;
     });
 
-    // Modules
+    // ---- Module loading order ----
+    //
+    // 1) THREE.js (CDN) — every patch + arena script depends on it.
     let use3D = await ensureThree();
-    if (use3D) use3D = await ensureModules(ARENA_SCRIPTS);
+
+    // 2) Arena config FIRST (before the perf patch — the perf patch needs
+    //    the TERRAIN global to exist so it can scale it).
+    if (use3D) use3D = await ensureModules(["./arena/arena-config.js"]);
+
+    // 3) Patch modules. Their script-side code only DEFINES helpers; the
+    //    side effects happen when we call .scaleTerrain / .applyToScene /
+    //    .applyToHud below.
+    const patchReady = await ensureModules(PATCH_SCRIPTS);
+    if (!patchReady) console.warn('[Game] patch modules failed to load');
+
+    // 4) NOW scale the battlefield — must happen BEFORE the remaining
+    //    arena scripts read TERRAIN so the GLB scaler, capture-point /
+    //    spawn-pad builders, and CAPTURE_POINTS shim all see the 2×
+    //    footprint.
+    if (window.FamiliarBotGamePerformance) {
+      window.FamiliarBotGamePerformance.scaleTerrain(2);
+    }
+
+    // 5) Remaining arena scripts (opal-battlefield, capture-points,
+    //    spawn-pads, arena/index.js) + MOBA + game-* runtime.
+    if (use3D) {
+      use3D = await ensureModules(ARENA_SCRIPTS.slice(1));
+    }
     const mobaReady = await ensureModules(MOBA_SCRIPTS);
     if (!mobaReady) console.warn('[Game] MOBA modules failed to load');
     const gameReady = await ensureModules(GAME_SCRIPTS);
     if (!gameReady) console.warn('[Game] game-* modules failed to load');
 
-    // Build HUD overlay
+    // ---- Build HUD overlay ----
     const hud = window.buildMobaHud(stage, { displayName: display, role });
 
-    // Hook match end
+    // Apply the new clustered ability layout + mobile-landscape CSS.
+    if (window.FamiliarBotGameUiLayout) {
+      window.FamiliarBotGameUiLayout.applyToHud(hud, stage);
+    }
+
+    // ---- Hook match end ----
     const ctx = {
       botId, displayName: display, role,
       onHome: options.onHome,
@@ -170,6 +232,7 @@
       }
     };
 
+    // ---- Start the actual Three.js scene ----
     let sceneCtrl = null;
     try {
       if (use3D && typeof window.startMobaThreeScene === 'function') {
@@ -180,6 +243,37 @@
     } catch (err) {
       console.error("[Game] 3D scene failed:", err);
       sceneCtrl = start2DScene(canvas, display);
+    }
+
+    // ---- Wire the visuals + performance patches into the live scene ----
+    if (sceneCtrl && sceneCtrl.scene && sceneCtrl.camera && sceneCtrl.renderer) {
+      if (window.FamiliarBotGameVisuals) {
+        window.FamiliarBotGameVisuals.applyToScene(
+          sceneCtrl.scene, sceneCtrl.renderer, { toon: false }
+        );
+        // Apply the toon shader after a beat so the GLB has had a chance
+        // to attach its materials. Wrapped in try/catch so a shader-level
+        // hiccup never crashes the game loop.
+        setTimeout(() => {
+          try { window.FamiliarBotGameVisuals.applyToon(sceneCtrl.scene, { verbose: false }); }
+          catch (e) { console.warn('[Game] toon pass skipped:', e && e.message); }
+        }, 1200);
+        // Re-apply visuals once more after the GLB finishes loading (it
+        // adds many meshes asynchronously). 3.5 s is generous but cheap.
+        setTimeout(() => {
+          try {
+            window.FamiliarBotGameVisuals.applyToScene(
+              sceneCtrl.scene, sceneCtrl.renderer, { toon: false }
+            );
+            window.FamiliarBotGameVisuals.applyToon(sceneCtrl.scene, { verbose: false });
+          } catch (e) { /* noop */ }
+        }, 3500);
+      }
+      if (window.FamiliarBotGamePerformance) {
+        window.FamiliarBotGamePerformance.attachToWorld(
+          sceneCtrl.scene, sceneCtrl.camera, sceneCtrl.world, sceneCtrl.vfx
+        );
+      }
     }
 
     setTimeout(() => {
