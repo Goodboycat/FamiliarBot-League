@@ -1,91 +1,60 @@
 /**
  * TERRAIN INDEX — Orchestrates the "Restival" 5v5 MOBA arena.
  *
- * As of the Opal Battlefield update, the visual base of the arena is loaded
- * from `assets/opal_battlefield.glb` instead of being assembled from the
- * legacy procedural modules (floor, perimeter-wall, glow-pools, jungle-bushes,
- * walls, pillars, altar). Those modules still ship in the project so they
- * can be re-enabled per-scene if the GLB fails to load — see USE_OPAL_GLB.
+ * The visual base of the arena is loaded from `assets/opal_battlefield.glb`.
+ * That single GLB contains the floor, perimeter walls, glowing gems, grass,
+ * spawn rings (blue/red), the 10 capture-point ring decals and the central
+ * altar — so the legacy procedural mesh modules (floor, perimeter-wall,
+ * glow-pools, jungle-bushes, walls, pillars, altar) have been removed from
+ * this folder. Their gameplay coordinates still live in `arena-config.js`
+ * (TERRAIN) so collision/clamp helpers continue to work against the same
+ * coordinate space.
  *
  * Gameplay overlays kept on top of the GLB:
  *   • Capture point indicators (5 per side) — drive capture progress visuals
  *   • Spawn pads (player/enemy) — animated team-colored hex pads
  *
- * Collision still keys off TERRAIN coordinates (walls, pillars, altar,
- * capture-point bases), so movement code continues to work unchanged.
- *
  * Call buildTerrain(scene) after the Three.js scene + lights exist.
  * Returns { update(dt), stats }.
  */
 
-const USE_OPAL_GLB = true;
-
 function buildTerrain(scene) {
-  let glbBattlefield = null;
-  let altar = null;
-
-  if (USE_OPAL_GLB && typeof buildOpalBattlefield === 'function') {
-    // ---- New GLB-based battlefield ----
-    glbBattlefield = buildOpalBattlefield(scene, (info) => {
-      // Recompute stats once the GLB has finished loading so the console
-      // tally reflects the real triangle count.
-      const stats = computeArenaStats(scene);
-      const b = TERRAIN.budget;
-      const tag = stats.tris <= b.maxTris && stats.drawCalls <= b.maxDrawCalls ? '✓' : '⚠';
-      console.log(
-        `[Arena] ${tag} ${stats.tris} tris / ${stats.drawCalls} draw calls ` +
-        `(budget: ${b.maxTris} tris, ${b.maxDrawCalls} calls). Source: Opal Battlefield GLB.`
-      );
-    });
-  } else {
-    // ---- Legacy procedural fallback ----
-    buildFloor(scene);
-    if (typeof buildPerimeterWall === 'function') buildPerimeterWall(scene);
-    if (typeof buildGlowPools     === 'function') buildGlowPools(scene);
-    if (typeof buildJungleBushes  === 'function') buildJungleBushes(scene);
-    altar = buildAltar(scene);
-    window._altarGroup = altar.group;
-    const pillars = buildPillars(scene);
-    window._pillarGroup = pillars.group;
-    const walls = buildWalls(scene);
-    window._wallMeshes = walls.meshes;
+  if (typeof buildOpalBattlefield !== 'function') {
+    console.error('[Arena] buildOpalBattlefield() missing — make sure opal-battlefield.js is loaded.');
+    return { update() {}, stats: { tris: 0, drawCalls: 0 } };
   }
 
-  // ---- Gameplay overlays (always built — they drive capture / spawn visuals) ----
+  // ---- GLB-based battlefield -------------------------------------------
+  const glbBattlefield = buildOpalBattlefield(scene, () => {
+    // Recompute stats once the GLB has finished loading so the console
+    // tally reflects the real triangle count.
+    const stats = computeArenaStats(scene);
+    const b = TERRAIN.budget;
+    const tag = stats.tris <= b.maxTris && stats.drawCalls <= b.maxDrawCalls ? '✓' : '⚠';
+    console.log(
+      `[Arena] ${tag} ${stats.tris} tris / ${stats.drawCalls} draw calls ` +
+      `(budget: ${b.maxTris} tris, ${b.maxDrawCalls} calls). Source: Opal Battlefield GLB.`
+    );
+  });
+
+  // ---- Gameplay overlays (always built — they drive capture / spawn visuals)
   buildCapturePoints(scene);
   const spawn = buildSpawnPads(scene);
   window._spawnPads = spawn;
 
-  // ---- Atmosphere (only set here when running the legacy path; the GLB
-  // module manages its own lights). ----
-  if (!glbBattlefield) {
-    scene.background = new THREE.Color(TERRAIN.palette.void);
-    if (scene.fog) {
-      scene.fog.color = new THREE.Color(0x07101c);
-      scene.fog.density = 0.009;
-    }
-    const hemi = new THREE.HemisphereLight(0xbfd6ff, 0x1a1326, 0.55);
-    scene.add(hemi);
-    const sun = new THREE.DirectionalLight(0xfff1c2, 0.5);
-    sun.position.set(40, 90, 30);
-    scene.add(sun);
-  }
-
-  // --- triangle / draw call accounting (initial snapshot) ---
+  // --- triangle / draw call accounting (initial snapshot) ---------------
   const stats = computeArenaStats(scene);
   if (typeof window !== 'undefined' && window.console) {
     const b = TERRAIN.budget;
     const tag = stats.tris <= b.maxTris && stats.drawCalls <= b.maxDrawCalls ? '✓' : '⚠';
-    const src = glbBattlefield ? 'Opal Battlefield GLB (loading…)' : 'procedural';
     console.log(
       `[Arena] ${tag} ${stats.tris} tris / ${stats.drawCalls} draw calls ` +
-      `(budget: ${b.maxTris} tris, ${b.maxDrawCalls} calls). Source: ${src}.`
+      `(budget: ${b.maxTris} tris, ${b.maxDrawCalls} calls). Source: Opal Battlefield GLB (loading…).`
     );
   }
 
   function update(dt) {
     if (glbBattlefield && glbBattlefield.update) glbBattlefield.update(dt);
-    if (altar) altar.update(dt);
     spawn.update(dt);
   }
 
@@ -119,14 +88,13 @@ function computeArenaStats(scene) {
 
 /**
  * Unified terrain collision — call from movement code (player + AI).
- * Pushes `pos` out of walls, pillars, altar, and base towers. These work
- * off TERRAIN coordinates directly, so they remain valid even when the
- * legacy meshes are replaced by the GLB battlefield.
+ *
+ * Since the procedural mesh modules were removed, only callers that
+ * registered collision helpers (e.g. capture-points.js -> collideWithCaptureTowers)
+ * contribute here. Movement code keeps clamping to the arena rectangle via
+ * clampToArenaRect() below.
  */
 function terrainCollide(pos, radius) {
-  if (typeof collideWithWalls         === 'function') collideWithWalls(pos, radius);
-  if (typeof collideWithPillars       === 'function') collideWithPillars(pos, radius);
-  if (typeof collideWithAltar         === 'function' && window._altarGroup) collideWithAltar(pos, radius);
   if (typeof collideWithCaptureTowers === 'function') collideWithCaptureTowers(pos, radius);
 }
 
@@ -151,7 +119,7 @@ function clampToArenaRect(pos) {
 }
 
 if (typeof window !== 'undefined') {
-  window.clampToArena = clampToArenaRect;
-  window.buildTerrain = buildTerrain;
+  window.clampToArena   = clampToArenaRect;
+  window.buildTerrain   = buildTerrain;
   window.terrainCollide = terrainCollide;
 }
