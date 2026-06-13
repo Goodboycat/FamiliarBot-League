@@ -213,12 +213,18 @@
       stickState.dx = 0; stickState.dy = 0;
       knob.style.transform = '';
     }
-    stickWrap.addEventListener('mousedown', stickStart);
-    stickWrap.addEventListener('touchstart', stickStart, { passive: false });
-    window.addEventListener('mousemove', stickMove);
-    window.addEventListener('touchmove', stickMove, { passive: false });
-    window.addEventListener('mouseup', stickEnd);
-    window.addEventListener('touchend', stickEnd);
+    // NOTE: When the FamiliarBotInput patch module is present it takes over
+    // joystick + camera-drag input (Pokémon-Unite-style spawn-on-touch).
+    // Keep the legacy listeners as a no-touch desktop fallback by binding
+    // them only when the input patch is NOT installed.
+    if (!global.FamiliarBotInput) {
+      stickWrap.addEventListener('mousedown', stickStart);
+      stickWrap.addEventListener('touchstart', stickStart, { passive: false });
+      window.addEventListener('mousemove', stickMove);
+      window.addEventListener('touchmove', stickMove, { passive: false });
+      window.addEventListener('mouseup', stickEnd);
+      window.addEventListener('touchend', stickEnd);
+    }
 
     // ---------- ability buttons ----------
     const abilityBtns = abilityRail.querySelectorAll('.ab');
@@ -382,7 +388,11 @@
         c.beginPath(); c.arc(x, y, 2.5, 0, Math.PI*2); c.fill();
       }
       world.allyBots.forEach(b => dot(b, '#7ad0ff'));
-      world.enemyBots.forEach(b => dot(b, '#ff8898'));
+      // Fog-of-war: only draw spotted enemies on the minimap. The
+      // performance patch flags each enemy with `._spotted` every frame.
+      world.enemyBots.forEach(b => {
+        if (b && b._spotted) dot(b, '#ff8898');
+      });
       world.wildRobots.forEach(b => dot(b, '#c685ff'));
       world.bosses.forEach(b => dot(b, '#fff066'));
       if (world.megaBoss) dot(world.megaBoss, '#ff2244');
