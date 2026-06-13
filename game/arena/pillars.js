@@ -1,5 +1,8 @@
 /**
- * PILLARS — Decorative opal columns with glowing white caps.
+ * PILLARS — Decorative opal columns, instanced.
+ *
+ * 1 draw call for shafts, 1 for bases, 1 for caps. Collision uses TERRAIN.pillars
+ * directly (no per-instance traversal of a group).
  *
  * Exports: buildPillars(scene) -> { group }
  */
@@ -9,64 +12,62 @@ function buildPillars(scene) {
   const group = new THREE.Group();
   group.name = 'Pillars';
 
-  const pillarH = 5.0;
-  const pillarR = 0.85;
+  const N = T.pillars.length;
+  const pillarH = 4.4;
+  const pillarR = 0.8;
+
+  // Shared low-poly geometries (8-segment cylinders, 8-segment sphere)
+  const shaftGeo = new THREE.CylinderGeometry(pillarR, pillarR * 1.08, pillarH, 8);
+  const baseGeo  = new THREE.CylinderGeometry(pillarR * 1.5, pillarR * 1.7, 0.4, 8);
+  const capGeo   = new THREE.SphereGeometry(pillarR * 1.05, 8, 6);
 
   const shaftMat = new THREE.MeshStandardMaterial({
-    color: P.pillar, metalness: 0.5, roughness: 0.35,
-    emissive: P.opalDark, emissiveIntensity: 0.25,
+    color: P.pillar, metalness: 0.4, roughness: 0.4,
+    emissive: P.poolGlow, emissiveIntensity: 0.12,
   });
-  const capMat = new THREE.MeshBasicMaterial({ color: P.pillarCap });
-  const baseMat = new THREE.MeshStandardMaterial({
+  const baseMat  = new THREE.MeshStandardMaterial({
     color: P.gold, metalness: 0.6, roughness: 0.4,
-    emissive: P.gold, emissiveIntensity: 0.15,
+  });
+  const capMat   = new THREE.MeshBasicMaterial({ color: P.pillarCap });
+
+  const shafts = new THREE.InstancedMesh(shaftGeo, shaftMat, N);
+  const bases  = new THREE.InstancedMesh(baseGeo,  baseMat,  N);
+  const caps   = new THREE.InstancedMesh(capGeo,   capMat,   N);
+  shafts.name = 'PillarShaftsInstanced';
+  bases.name  = 'PillarBasesInstanced';
+  caps.name   = 'PillarCapsInstanced';
+
+  const m = new THREE.Matrix4();
+  const p = new THREE.Vector3();
+  const q = new THREE.Quaternion();
+  const s = new THREE.Vector3(1, 1, 1);
+
+  T.pillars.forEach(([x, z], i) => {
+    p.set(x, 0.2, z);              m.compose(p, q, s); bases.setMatrixAt(i, m);
+    p.set(x, 0.4 + pillarH / 2, z); m.compose(p, q, s); shafts.setMatrixAt(i, m);
+    p.set(x, 0.4 + pillarH + pillarR * 0.4, z); m.compose(p, q, s); caps.setMatrixAt(i, m);
   });
 
-  T.pillars.forEach(([x, z]) => {
-    const p = new THREE.Group();
+  shafts.instanceMatrix.needsUpdate = true;
+  bases.instanceMatrix.needsUpdate  = true;
+  caps.instanceMatrix.needsUpdate   = true;
 
-    // base plinth
-    const baseGeo = new THREE.CylinderGeometry(pillarR * 1.5, pillarR * 1.7, 0.4, 12);
-    const base = new THREE.Mesh(baseGeo, baseMat);
-    base.position.y = 0.2;
-    p.add(base);
+  group.add(bases); group.add(shafts); group.add(caps);
 
-    // shaft
-    const shaftGeo = new THREE.CylinderGeometry(pillarR, pillarR * 1.1, pillarH, 12);
-    const shaft = new THREE.Mesh(shaftGeo, shaftMat);
-    shaft.position.y = 0.4 + pillarH / 2;
-    p.add(shaft);
-
-    // cap (glowing sphere)
-    const capGeo = new THREE.SphereGeometry(pillarR * 1.1, 14, 10);
-    const cap = new THREE.Mesh(capGeo, capMat);
-    cap.position.y = 0.4 + pillarH + pillarR * 0.4;
-    p.add(cap);
-
-    // pulse light
-    const pl = new THREE.PointLight(P.opalLight, 0.8, 14);
-    pl.position.y = 0.4 + pillarH + pillarR * 0.4;
-    p.add(pl);
-
-    p.position.set(x, 0, z);
-    p.userData.isPillar = true;
-    p.userData.collider = { x, z, r: pillarR + 0.4 };
-    group.add(p);
-  });
-
+  // Subtle global point light at center to read pillars without spamming per-pillar lights
+  // (mobile-friendly: one light covers the whole arena from above the altar)
   scene.add(group);
   return { group };
 }
 
-// Soft pillar collision (treats each as a circle)
+// Pillar collision uses TERRAIN.pillars directly (no group walk)
 function collideWithPillars(pos, radius) {
-  if (!window._pillarGroup) return;
-  window._pillarGroup.children.forEach(p => {
-    const c = p.userData.collider;
-    if (!c) return;
-    const dx = pos.x - c.x, dz = pos.z - c.z;
+  if (typeof TERRAIN === 'undefined' || !TERRAIN.pillars) return;
+  const pillarR = 0.8;
+  TERRAIN.pillars.forEach(([x, z]) => {
+    const dx = pos.x - x, dz = pos.z - z;
     const d = Math.hypot(dx, dz);
-    const minD = c.r + radius;
+    const minD = pillarR + 0.4 + radius;
     if (d > 1e-3 && d < minD) {
       const push = (minD - d);
       pos.x += (dx / d) * push;

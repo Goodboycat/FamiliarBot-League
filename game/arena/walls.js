@@ -1,9 +1,10 @@
 /**
- * WALLS — Short blocky barriers in Sky Ruins style.
- * Each wall is a segment defined by (x1,z1,x2,z2). We extrude a thin glowing
- * box along the segment, slightly above the floor.
+ * WALLS — Inner short barriers, rendered via a single InstancedMesh.
  *
- * Exports: buildWalls(scene) -> { group, meshes }
+ * 1 draw call for all wall bodies, 1 for all caps. Material is shared.
+ * Collision data is preserved on a per-segment array (no per-instance mesh).
+ *
+ * Exports: buildWalls(scene) -> { group, meshes }   (`meshes` kept for back-compat)
  */
 
 function buildWalls(scene) {
@@ -12,67 +13,81 @@ function buildWalls(scene) {
   group.name = 'Walls';
 
   const wallH = 1.8;
-  const wallT = 1.2; // thickness
+  const wallT = 1.2;
+  const N = T.walls.length;
 
-  const baseMat = new THREE.MeshStandardMaterial({
-    color: P.wall, metalness: 0.4, roughness: 0.45,
-    emissive: P.opalMid, emissiveIntensity: 0.5,
+  // Shared geometry (1 box) instanced N times for the body + cap
+  const bodyGeo = new THREE.BoxGeometry(1, wallH, wallT);    // we'll scale X per instance via matrix
+  const bodyMat = new THREE.MeshStandardMaterial({
+    color: P.stoneWall, metalness: 0.25, roughness: 0.7,
+    emissive: P.stoneCap, emissiveIntensity: 0.05,
   });
+  const bodies = new THREE.InstancedMesh(bodyGeo, bodyMat, N);
+  bodies.name = 'WallBodiesInstanced';
+  bodies.userData.isWall = true;
+
+  const capGeo = new THREE.BoxGeometry(1, 0.18, wallT * 0.55);
   const capMat = new THREE.MeshBasicMaterial({
-    color: P.opalLight, transparent: true, opacity: 0.85,
+    color: P.poolGlow, transparent: true, opacity: 0.8,
   });
+  const caps = new THREE.InstancedMesh(capGeo, capMat, N);
+  caps.name = 'WallCapsInstanced';
 
+  const m = new THREE.Matrix4();
+  const pos = new THREE.Vector3();
+  const quat = new THREE.Quaternion();
+  const scale = new THREE.Vector3();
+
+  // collision array (back-compat shape: array of meshes-like objects)
   const meshes = [];
 
-  T.walls.forEach(([x1, z1, x2, z2]) => {
+  T.walls.forEach((seg, i) => {
+    const [x1, z1, x2, z2] = seg;
     const dx = x2 - x1, dz = z2 - z1;
     const len = Math.hypot(dx, dz) + wallT * 0.6;
     const angle = Math.atan2(dz, dx);
     const cx = (x1 + x2) / 2;
     const cz = (z1 + z2) / 2;
 
-    // Body
-    const geo = new THREE.BoxGeometry(len, wallH, wallT);
-    const wall = new THREE.Mesh(geo, baseMat);
-    wall.position.set(cx, wallH / 2, cz);
-    wall.rotation.y = -angle; // box X-axis aligns with segment
-    wall.userData.isWall = true;
-    wall.userData.segment = [x1, z1, x2, z2];
-    group.add(wall);
-    meshes.push(wall);
+    // body matrix
+    pos.set(cx, wallH / 2, cz);
+    quat.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -angle);
+    scale.set(len, 1, 1);
+    m.compose(pos, quat, scale);
+    bodies.setMatrixAt(i, m);
 
-    // Glowing top cap (slightly thinner)
-    const capGeo = new THREE.BoxGeometry(len * 0.96, 0.18, wallT * 0.55);
-    const cap = new THREE.Mesh(capGeo, capMat);
-    cap.position.set(cx, wallH + 0.09, cz);
-    cap.rotation.y = -angle;
-    group.add(cap);
+    // cap matrix (slightly above body)
+    pos.set(cx, wallH + 0.09, cz);
+    scale.set(len * 0.96, 1, 1);
+    m.compose(pos, quat, scale);
+    caps.setMatrixAt(i, m);
 
-    // Soft point light along longer walls
-    if (len > 8) {
-      const pl = new THREE.PointLight(P.opalMid, 0.5, 10);
-      pl.position.set(cx, wallH + 1.2, cz);
-      group.add(pl);
-    }
+    meshes.push({
+      userData: { isWall: true, segment: seg },
+      // expose minimal interface used by collideWithWalls
+    });
   });
 
+  bodies.instanceMatrix.needsUpdate = true;
+  caps.instanceMatrix.needsUpdate = true;
+
+  group.add(bodies);
+  group.add(caps);
   scene.add(group);
+
   return { group, meshes };
 }
 
-// AABB-style wall collision helper for AI / player movement.
-// Pushes `pos` (THREE.Vector3) out of any wall it intersects.
-// Call inside the movement update.
+// Wall collision (uses TERRAIN.walls directly — no per-instance mesh needed)
 function collideWithWalls(pos, radius) {
-  if (!window._wallMeshes) return;
-  const wallH = 1.8, wallT = 1.2;
-  window._wallMeshes.forEach(w => {
-    const [x1, z1, x2, z2] = w.userData.segment;
+  if (typeof TERRAIN === 'undefined' || !TERRAIN.walls) return;
+  const wallT = 1.2;
+  TERRAIN.walls.forEach(seg => {
+    const [x1, z1, x2, z2] = seg;
     const dx = x2 - x1, dz = z2 - z1;
     const len = Math.hypot(dx, dz);
     if (len < 1e-3) return;
     const ux = dx / len, uz = dz / len;
-    // project (pos - segment center) onto segment axis
     const cx = (x1 + x2) / 2, cz = (z1 + z2) / 2;
     const px = pos.x - cx, pz = pos.z - cz;
     const along = px * ux + pz * uz;
@@ -80,7 +95,6 @@ function collideWithWalls(pos, radius) {
     const halfL = len / 2 + wallT * 0.3;
     const halfT = wallT / 2 + radius;
     if (Math.abs(along) < halfL && Math.abs(perp) < halfT) {
-      // push out along perp direction
       const sign = perp >= 0 ? 1 : -1;
       const pushPerp = (halfT - Math.abs(perp)) * sign;
       pos.x += -uz * pushPerp;

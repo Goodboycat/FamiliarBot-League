@@ -1,10 +1,17 @@
 /**
- * CAPTURE POINTS — 10 mirrored goal zones (5 per side).
- * Tier-styled (base = tallest tower, middle = mid tower, outer = low ring).
- * Updates `capturePointMeshes` global used by capture.js / scene.js.
+ * CAPTURE POINTS — 10 mirrored capture circles (5 per side).
+ *
+ * Per-tier optimization: pads / outlines / towers / crowns / orbs / lights
+ * are batched by InstancedMesh so we stay at ~6 draw calls regardless of
+ * point count. The PAD CIRCLES carry the EMISSIVE team color (per user req).
+ *
+ * Backward-compat: still populates `capturePointMeshes[id]` with
+ *   { group, cylinder, ring, light, tower, orb, outline, _instanceIndex }
+ * so updateCapturePointVisuals can recolor by tweaking per-instance color.
  *
  * Exports: buildCapturePoints(scene) -> { group }
- *          updateCapturePointVisuals(cps)  -- overrides the original
+ *          updateCapturePointVisualsV2(cps)
+ *          collideWithCaptureTowers(pos, radius)
  */
 
 function buildCapturePoints(scene) {
@@ -12,104 +19,164 @@ function buildCapturePoints(scene) {
   const group = new THREE.Group();
   group.name = 'CapturePoints';
 
-  CAPTURE_POINTS.forEach(cp => {
-    const g = new THREE.Group();
+  const N = CAPTURE_POINTS.length;
+
+  // tier dims (must be uniform per-instance, so we approximate by averaging
+  // radius into each instance's scale; tower/orb scale handled per instance)
+  const tierProps = {
+    outer:  { towerH: 1.6, towerR: 1.0, padOpacity: 0.55 },
+    middle: { towerH: 2.8, towerR: 1.3, padOpacity: 0.65 },
+    base:   { towerH: 4.4, towerR: 1.8, padOpacity: 0.80 },
+  };
+
+  // --- shared geometries (low-poly, all reused via instancing) ---
+  const padGeo = new THREE.CylinderGeometry(1, 1, 0.16, 24);              // 48 tris
+  const ringGeo = new THREE.RingGeometry(0.92, 1.0, 32);                  // 32 tris
+  const towerGeo = new THREE.CylinderGeometry(0.7, 1.0, 1.0, 10);         // 20 tris (unit, scaled per-instance)
+  const crownGeo = new THREE.TorusGeometry(1.0, 0.14, 6, 18);             // 108 tris
+  const orbGeo   = new THREE.SphereGeometry(1.0, 10, 8);                  // ~80 tris
+
+  // --- materials (emissive on pad + tower as user requested) ---
+  const padMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff, transparent: true, opacity: 0.7,
+    emissive: 0xffffff, emissiveIntensity: 1.4, metalness: 0.0, roughness: 0.6,
+    vertexColors: false,
+  });
+  // Allow per-instance color tinting on emissive pads
+  padMat.onBeforeCompile = (s) => {
+    s.vertexShader = '#define USE_INSTANCING_COLOR\n' + s.vertexShader;
+  };
+
+  const ringMat = new THREE.MeshBasicMaterial({
+    color: 0xffffff, transparent: true, opacity: 0.85, side: THREE.DoubleSide,
+  });
+  const towerMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff, metalness: 0.55, roughness: 0.3,
+    emissive: 0xffffff, emissiveIntensity: 0.55,
+  });
+  const crownMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 });
+  const orbMat   = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+  // --- instanced meshes ---
+  const pads    = new THREE.InstancedMesh(padGeo,   padMat,   N);
+  const rings   = new THREE.InstancedMesh(ringGeo,  ringMat,  N);
+  const towers  = new THREE.InstancedMesh(towerGeo, towerMat, N);
+  const crowns  = new THREE.InstancedMesh(crownGeo, crownMat, N);
+  const orbs    = new THREE.InstancedMesh(orbGeo,   orbMat,   N);
+  pads.name = 'CP_Pads'; rings.name = 'CP_Rings';
+  towers.name = 'CP_Towers'; crowns.name = 'CP_Crowns'; orbs.name = 'CP_Orbs';
+
+  // Per-instance colors so we can recolor on capture
+  const padColor = new Float32Array(N * 3);
+  const towerColor = new Float32Array(N * 3);
+  pads.instanceColor   = new THREE.InstancedBufferAttribute(padColor, 3);
+  towers.instanceColor = new THREE.InstancedBufferAttribute(towerColor, 3);
+
+  const m = new THREE.Matrix4();
+  const p = new THREE.Vector3();
+  const q = new THREE.Quaternion();
+  const qRingFlat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
+  const qCrownFlat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0),  Math.PI / 2);
+  const s = new THREE.Vector3(1, 1, 1);
+
+  // Backward-compat lookup (used by capture.js / scene.js)
+  if (typeof window !== 'undefined' && !window.capturePointMeshes) {
+    window.capturePointMeshes = {};
+  }
+
+  CAPTURE_POINTS.forEach((cp, i) => {
     const tier = cp.tier || 'middle';
+    const tp = tierProps[tier];
     const sideColor = cp.side === 'player' ? P.teamPlayer : P.teamEnemy;
+    const sideColorObj = new THREE.Color(sideColor);
 
-    // tier dimensions
-    const tierProps = {
-      outer:  { towerH: 1.4, towerR: 1.0, ringR: cp.captureRadius, padOpacity: 0.45 },
-      middle: { towerH: 2.6, towerR: 1.3, ringR: cp.captureRadius, padOpacity: 0.5  },
-      base:   { towerH: 4.2, towerR: 1.8, ringR: cp.captureRadius, padOpacity: 0.6  },
-    }[tier];
+    const [cx, cz] = cp.position;
 
-    // 1. Floor pad (large flat disc)
-    const padGeo = new THREE.CylinderGeometry(cp.captureRadius, cp.captureRadius, 0.16, 32);
-    const padMat = new THREE.MeshBasicMaterial({
-      color: sideColor, transparent: true, opacity: tierProps.padOpacity,
-    });
-    const pad = new THREE.Mesh(padGeo, padMat);
-    pad.position.y = 0.08;
-    g.add(pad);
+    // PAD — cylinder of radius cp.captureRadius
+    p.set(cx, 0.10, cz);
+    s.set(cp.captureRadius, 1, cp.captureRadius);
+    m.compose(p, new THREE.Quaternion(), s);
+    pads.setMatrixAt(i, m);
+    pads.setColorAt(i, sideColorObj);
 
-    // 2. Outer ring on the floor
-    const outline = new THREE.Mesh(
-      new THREE.RingGeometry(cp.captureRadius * 0.92, cp.captureRadius, 48),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.75, side: THREE.DoubleSide })
-    );
-    outline.rotation.x = -Math.PI / 2;
-    outline.position.y = 0.17;
-    g.add(outline);
+    // RING outline (flat on ground)
+    p.set(cx, 0.19, cz);
+    s.set(cp.captureRadius, cp.captureRadius, 1);
+    m.compose(p, qRingFlat, s);
+    rings.setMatrixAt(i, m);
 
-    // 3. Central tower / pylon
-    const towerMat = new THREE.MeshStandardMaterial({
-      color: sideColor, metalness: 0.55, roughness: 0.35,
-      emissive: sideColor, emissiveIntensity: 0.5,
-    });
-    const tower = new THREE.Mesh(
-      new THREE.CylinderGeometry(tierProps.towerR * 0.7, tierProps.towerR, tierProps.towerH, 12),
-      towerMat
-    );
-    tower.position.y = tierProps.towerH / 2 + 0.16;
-    g.add(tower);
+    // TOWER (vertical cylinder)
+    p.set(cx, tp.towerH / 2 + 0.16, cz);
+    s.set(tp.towerR, tp.towerH, tp.towerR);
+    m.compose(p, new THREE.Quaternion(), s);
+    towers.setMatrixAt(i, m);
+    towers.setColorAt(i, sideColorObj);
 
-    // 4. Glowing crown ring around tower
-    const crown = new THREE.Mesh(
-      new THREE.TorusGeometry(tierProps.towerR * 1.3, 0.18, 8, 24),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 })
-    );
-    crown.rotation.x = Math.PI / 2;
-    crown.position.y = tierProps.towerH + 0.16;
-    g.add(crown);
+    // CROWN (torus, axis vertical → rotate to lie flat horizontally)
+    p.set(cx, tp.towerH + 0.16, cz);
+    s.set(tp.towerR * 1.3, tp.towerR * 1.3, tp.towerR * 1.3);
+    m.compose(p, qCrownFlat, s);
+    crowns.setMatrixAt(i, m);
 
-    // 5. Top orb
-    const orb = new THREE.Mesh(
-      new THREE.SphereGeometry(tierProps.towerR * 0.55, 16, 12),
-      new THREE.MeshBasicMaterial({ color: 0xffffff })
-    );
-    orb.position.y = tierProps.towerH + 0.55;
-    g.add(orb);
+    // ORB
+    p.set(cx, tp.towerH + 0.55, cz);
+    s.set(tp.towerR * 0.55, tp.towerR * 0.55, tp.towerR * 0.55);
+    m.compose(p, new THREE.Quaternion(), s);
+    orbs.setMatrixAt(i, m);
 
-    // 6. Point light
-    const pl = new THREE.PointLight(sideColor, 1.0, 16);
-    pl.position.y = tierProps.towerH + 0.6;
-    g.add(pl);
-
-    // 7. (Base tier only) four mini-pillars at cardinals
+    // Per-CP point light (only on Base tier — keeps mobile light count low)
+    let light = null;
     if (tier === 'base') {
-      const miniMat = new THREE.MeshStandardMaterial({
-        color: P.gold, metalness: 0.7, roughness: 0.35,
-        emissive: P.gold, emissiveIntensity: 0.15,
-      });
-      [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dz]) => {
-        const m = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.35, 0.45, 1.6, 8),
-          miniMat
-        );
-        m.position.set(dx * cp.captureRadius * 0.75, 0.8, dz * cp.captureRadius * 0.75);
-        g.add(m);
-      });
+      light = new THREE.PointLight(sideColor, 1.2, 18);
+      light.position.set(cx, tp.towerH + 0.8, cz);
+      scene.add(light);
     }
 
-    g.position.set(cp.position[0], 0, cp.position[1]);
-    g.userData.cpId = cp.id;
-    g.userData.collider = { x: cp.position[0], z: cp.position[1], r: tierProps.towerR + 0.4 };
-    group.add(g);
-
-    // Register in the global mesh map used by capture.js / scene.js
+    // Back-compat mesh handle for existing capture/scene code
     capturePointMeshes[cp.id] = {
-      group: g, cylinder: pad, ring: crown, light: pl, tower, orb, outline,
+      group: null,
+      cylinder: { material: { color: { setHex: (h) => recolorInstance(pads, padColor, i, h) }, opacity: tp.padOpacity } },
+      ring:     { material: { color: { setHex: () => {} } } },
+      light,
+      tower:    { material: {
+        color:    { setHex: (h) => recolorInstance(towers, towerColor, i, h) },
+        emissive: { setHex: () => {} },
+      }},
+      orb: null,
+      outline: null,
+      _instanceIndex: i,
+      _tier: tier,
+      _tierProps: tp,
+      _pos: [cx, cz],
     };
   });
 
+  pads.instanceMatrix.needsUpdate   = true;
+  rings.instanceMatrix.needsUpdate  = true;
+  towers.instanceMatrix.needsUpdate = true;
+  crowns.instanceMatrix.needsUpdate = true;
+  orbs.instanceMatrix.needsUpdate   = true;
+  pads.instanceColor.needsUpdate    = true;
+  towers.instanceColor.needsUpdate  = true;
+
+  // pads + tower materials need to declare USE_INSTANCING_COLOR
+  // (THREE r128 handles this automatically when instanceColor is set on InstancedMesh)
+  group.add(pads); group.add(rings); group.add(towers); group.add(crowns); group.add(orbs);
   scene.add(group);
   return { group };
 }
 
-// Replacement for the original updateCapturePointVisuals in scene.js.
-// Updates pad/crown/orb/light/outline to reflect owner + contested + progress.
+function recolorInstance(instMesh, colorArr, i, hex) {
+  const c = new THREE.Color(hex);
+  colorArr[i * 3 + 0] = c.r;
+  colorArr[i * 3 + 1] = c.g;
+  colorArr[i * 3 + 2] = c.b;
+  if (instMesh.instanceColor) instMesh.instanceColor.needsUpdate = true;
+}
+
+// V2 visual updater — recolors emissive pad + tower based on owner / contested.
 function updateCapturePointVisualsV2(cps) {
+  if (typeof TERRAIN === 'undefined') return;
   const P = TERRAIN.palette;
   cps.forEach(cp => {
     const m = capturePointMeshes[cp.id];
@@ -119,33 +186,26 @@ function updateCapturePointVisualsV2(cps) {
     else if (cp.owner === 'enemy') color = P.teamEnemy;
     else color = 0xffffff;
     if (cp._contested) color = 0xffee44;
-
-    m.cylinder.material.color.setHex(color);
-    if (m.ring && m.ring.material) m.ring.material.color.setHex(0xffffff);
+    if (m.cylinder?.material?.color?.setHex) m.cylinder.material.color.setHex(color);
+    if (m.tower?.material?.color?.setHex)    m.tower.material.color.setHex(color);
     if (m.light) m.light.color.setHex(color);
-    if (m.tower && m.tower.material) {
-      m.tower.material.color.setHex(color);
-      if (m.tower.material.emissive) m.tower.material.emissive.setHex(color);
-    }
-    m.cylinder.material.opacity = 0.35 + Math.abs(cp.captureProgress || 0) * 0.5;
   });
 }
 
-// Make this the canonical implementation
 if (typeof window !== 'undefined') {
   window.updateCapturePointVisuals = updateCapturePointVisualsV2;
 }
 
-// Soft collision (only base towers block movement — middle/outer are walk-through pads)
+// Base-tier collision (only Base towers physically block movement)
 function collideWithCaptureTowers(pos, radius) {
+  if (typeof CAPTURE_POINTS === 'undefined') return;
   CAPTURE_POINTS.forEach(cp => {
     if (cp.tier !== 'base') return;
-    const m = capturePointMeshes[cp.id];
-    if (!m || !m.group.userData.collider) return;
-    const c = m.group.userData.collider;
-    const dx = pos.x - c.x, dz = pos.z - c.z;
+    const [cx, cz] = cp.position;
+    const r = 1.8 + 0.4;
+    const dx = pos.x - cx, dz = pos.z - cz;
     const d = Math.hypot(dx, dz);
-    const minD = c.r + radius;
+    const minD = r + radius;
     if (d > 1e-3 && d < minD) {
       const push = (minD - d);
       pos.x += (dx / d) * push;
