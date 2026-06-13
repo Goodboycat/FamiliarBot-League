@@ -224,8 +224,11 @@
           enemies: world.enemyBots.map(packActor),
           scores:  { player: world.score.player, enemy: world.score.enemy },
           onContinue() {
-            if (typeof options.onExit === 'function') options.onExit();
-            else if (typeof options.onHome === 'function') options.onHome();
+            // After the victory / defeat / stalemate screen, send the
+            // player back to the MAIN MENU (not the garage). Falls back
+            // to onExit if no menu handler was wired up.
+            if (typeof options.onHome === 'function') options.onHome();
+            else if (typeof options.onExit === 'function') options.onExit();
           }
         };
         window.showVictoryScreen(stage, data);
