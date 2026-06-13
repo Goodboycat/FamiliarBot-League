@@ -23,6 +23,9 @@
   const ARENA_SCRIPTS = [
     "./arena/arena-config.js",
     "./arena/floor.js",
+    "./arena/perimeter-wall.js",
+    "./arena/glow-pools.js",
+    "./arena/jungle-bushes.js",
     "./arena/walls.js",
     "./arena/pillars.js",
     "./arena/capture-points.js",
