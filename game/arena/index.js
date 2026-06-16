@@ -39,8 +39,21 @@ function buildTerrain(scene) {
 
   // ---- Gameplay overlays (always built — they drive capture / spawn visuals)
   buildCapturePoints(scene);
-  const spawn = buildSpawnPads(scene);
+
+  // Spawn portals (GLB-based) — falls back to procedural hex pads if the
+  // portal GLBs fail to load. The portal module internally calls
+  // buildSpawnPads({ silent: true }) and hides those pads once the GLBs
+  // are in, so we never end up with both visible at the same time.
+  const spawn = (typeof buildSpawnPortals === 'function')
+    ? buildSpawnPortals(scene)
+    : buildSpawnPads(scene);
   window._spawnPads = spawn;
+
+  // Tall-grass bushes (Pokémon-Unite-style hide mechanic). The mechanic is
+  // wired in game-world.js / ai.js — this module only owns the visuals +
+  // pointInGrass() volume query.
+  const grass = (typeof buildTallGrass === 'function') ? buildTallGrass(scene) : null;
+  window._tallGrass = grass;
 
   // --- triangle / draw call accounting (initial snapshot) ---------------
   const stats = computeArenaStats(scene);
@@ -55,7 +68,8 @@ function buildTerrain(scene) {
 
   function update(dt) {
     if (glbBattlefield && glbBattlefield.update) glbBattlefield.update(dt);
-    spawn.update(dt);
+    if (spawn && spawn.update) spawn.update(dt);
+    if (grass && grass.update) grass.update(dt);
   }
 
   return { update, stats };

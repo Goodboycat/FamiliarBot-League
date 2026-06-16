@@ -6,10 +6,11 @@
  * Exports: buildSpawnPads(scene) -> { group, getSpawn(side), update(dt) }
  */
 
-function buildSpawnPads(scene) {
+function buildSpawnPads(scene, opts) {
+  opts = opts || {};
   const T = TERRAIN, P = T.palette;
   const group = new THREE.Group();
-  group.name = 'SpawnPads';
+  group.name = opts.silent ? 'SpawnPads_Fallback' : 'SpawnPads';
 
   const sides = [
     { key: 'player', cfg: T.spawns.player, color: P.teamPlayer },
@@ -58,6 +59,8 @@ function buildSpawnPads(scene) {
 
     pad.position.set(cfg.pos[0], 0, cfg.pos[1]);
     pad.userData.side = key;
+    // Tag every descendant so spawn-portals.js can hide just this side.
+    pad.traverse((o) => { o.userData = o.userData || {}; o.userData.side = key; });
     group.add(pad);
   });
 
