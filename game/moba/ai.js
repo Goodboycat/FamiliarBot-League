@@ -35,6 +35,9 @@
     const enemies = (self.team === 'player') ? world.enemyBots : world.allyBots.concat(world.player ? [world.player] : []);
     for (const e of enemies) {
       if (!e.alive) continue;
+      // Pokémon-Unite hide mechanic: actors inside a tall-grass bush are
+      // invisible to enemies until they attack / take damage / leave.
+      if (typeof world.isHiddenFrom === 'function' && world.isHiddenFrom(e, self)) continue;
       const d = dist2(self, e);
       if (d < bd) { bd = d; best = e; }
     }
