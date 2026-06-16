@@ -83,7 +83,12 @@
         spawn: { x: opts.x, z: opts.z },
         targetCp: null,
         mesh: null,
-        stats: makeStats()
+        stats: makeStats(),
+        // -- Pokémon-Unite hide mechanic state --
+        inGrass:    false,   // currently standing inside a tall-grass patch
+        hidden:     false,   // currently invisible to enemies
+        revealTimer: 0,      // seconds of "recently attacked" reveal remaining
+        grassPatch: null     // reference to the current TallGrass patch (or null)
       };
     }
 
@@ -228,6 +233,8 @@
 
     function dealDamage(target, attacker, dmg) {
       if (!target.alive) return;
+      // Taking damage briefly reveals the target as well (matches Unite).
+      if (target) target.revealTimer = Math.max(target.revealTimer || 0, 1.0);
       let amount = Math.max(0, dmg) * (target.dmgTakenMult || 1.0);
       if (target.shield > 0) {
         const absorbed = Math.min(target.shield, amount);
@@ -296,6 +303,8 @@
     function fireBasicAttack(self, target) {
       if (!target || !target.alive) return;
       const dmg = self.attack;
+      // Attacking reveals the attacker for a short window (Unite rule).
+      if (self) self.revealTimer = Math.max(self.revealTimer || 0, 1.2);
       vfx.burst({
         type: 'beam',
         pos: new THREE.Vector3(self.x, 2.4, self.z),
@@ -311,6 +320,8 @@
       if (slotEntry.cd > 0) return false;
       const p = slotEntry.def;
       slotEntry.cd = p.cooldown;
+      // Casting a power also breaks stealth for the caster.
+      if (self) self.revealTimer = Math.max(self.revealTimer || 0, 1.2);
 
       const dir    = new THREE.Vector3(Math.cos(self.facing), 0, Math.sin(self.facing));
       const center = new THREE.Vector3(self.x, 1.5, self.z);
@@ -509,6 +520,60 @@
     world.grantXp         = grantXp;
     world.destroyCircle   = destroyCircle;
 
+    // ------------------------------------------------------- hide mechanic
+    // Pokémon-Unite style: an actor inside a tall-grass patch is invisible
+    // to enemies until they attack / get hit / leave the bush. Allies and
+    // neutrals (wild robots, bosses) can always see them.
+    //
+    // We don't gate basic-attack range or capture progress on hidden state;
+    // we only hide the *rendering* of enemies from the local player, and we
+    // hide them from enemy AI target picking. This matches the Unite "bushes
+    // hide you but don't stop you from doing stuff" rule.
+    world.isHiddenFrom = function (actor, viewer) {
+      if (!actor || !viewer) return false;
+      if (!actor.alive)  return false;
+      if (!actor.hidden) return false;
+      // Same-team allies + neutrals can always see.
+      if (viewer.team === actor.team) return false;
+      if (viewer.team === 'neutral')  return false;
+      // A viewer standing inside the SAME grass patch as the target can see
+      // through it (Pokémon-Unite "same bush" rule).
+      if (viewer.inGrass && actor.grassPatch && viewer.grassPatch === actor.grassPatch) return false;
+      return true;
+    };
+
+    function updateHideStateFor(actor, dt) {
+      if (!actor || !actor.alive) {
+        if (actor) { actor.inGrass = false; actor.hidden = false; actor.grassPatch = null; }
+        return;
+      }
+      const grass = window.FamiliarBotTallGrass;
+      const wasInGrass = actor.inGrass;
+      if (!grass || typeof grass.pointInGrass !== 'function') {
+        actor.inGrass = false;
+        actor.hidden  = false;
+        actor.grassPatch = null;
+      } else {
+        const patch = grass.pointInGrass(actor.x, actor.z);
+        actor.inGrass    = !!patch;
+        actor.grassPatch = patch || null;
+      }
+      if (actor.revealTimer && actor.revealTimer > 0) {
+        actor.revealTimer = Math.max(0, actor.revealTimer - dt);
+      }
+      actor.hidden = !!actor.inGrass && (!actor.revealTimer || actor.revealTimer <= 0);
+
+      // Player-only HUD feedback when stealth state flips.
+      if (actor === world.player && hud && typeof hud.showBanner === 'function') {
+        if (!wasInGrass && actor.inGrass) {
+          hud.showBanner('Stealth', 'Hidden in tall grass');
+        } else if (wasInGrass && !actor.inGrass) {
+          hud.showBanner('Stealth', 'Visible');
+        }
+      }
+    }
+    world.updateHideStateFor = updateHideStateFor;
+
     // ---------------------------------------------------------- setup
     world.player        = buildPlayer();
     world.allyBots      = buildTeamBots('player');
@@ -570,6 +635,11 @@
       if (world.over) return;
       world.time += dt;
 
+      // Recompute per-actor grass / hidden state once per frame, BEFORE the
+      // AI tick — so AI's target picking already sees up-to-date stealth.
+      const _all = [world.player].concat(world.allyBots, world.enemyBots);
+      for (const a of _all) updateHideStateFor(a, dt);
+
       // spawn schedules
       world.nextWildSpawn -= dt;
       if (world.nextWildSpawn <= 0) {
@@ -604,6 +674,37 @@
           a.mesh.userData.animPhase = (a.mesh.userData.animPhase || 0) + dt * 8;
           const bob = Math.sin(a.mesh.userData.animPhase) * 0.08 * a.mesh.userData.scale;
           a.mesh.position.y = bob;
+
+          // ----- Hide-mechanic rendering ---------------------------------
+          // The local viewer is always world.player. Hide enemies that the
+          // player cannot see; allies in grass get a subtle alpha dim so
+          // the player still tracks them.
+          const viewer = world.player;
+          const hiddenFromViewer = world.isHiddenFrom(a, viewer);
+          if (a.team === viewer.team || a === viewer) {
+            // Allies / self: stay visible but slightly transparent in grass
+            // to show the stealth state.
+            a.mesh.visible = true;
+            const dim = a.hidden ? 0.55 : 1.0;
+            a.mesh.traverse((o) => {
+              if (o.isMesh && o.material) {
+                const mats = Array.isArray(o.material) ? o.material : [o.material];
+                mats.forEach((m) => {
+                  if (m && m.opacity != null) {
+                    if (m._fbBaseTransparent === undefined) {
+                      m._fbBaseTransparent = !!m.transparent;
+                      m._fbBaseOpacity = m.opacity;
+                    }
+                    m.transparent = dim < 1.0 ? true : m._fbBaseTransparent;
+                    m.opacity = dim < 1.0 ? dim : m._fbBaseOpacity;
+                  }
+                });
+              }
+            });
+          } else {
+            // Opposing team: hard-hide if currently in stealth.
+            a.mesh.visible = !hiddenFromViewer;
+          }
         }
       }
       for (const w of world.wildRobots) {

@@ -19,6 +19,14 @@
  *     scaled by game-performance.js is reachable.
  *   • The render loop calls FamiliarBotGamePerformance.tick(dt) on every
  *     frame to drive off-camera actor culling.
+ *
+ * UPDATE — 2026 patch (camera + input):
+ *   • Camera follow is now Pokémon-Unite-close (was top-down 65/55,
+ *     now 22/18 multiplied by scale, with a slightly steeper angle).
+ *   • Camera position adds an offset returned by FamiliarBotInput so the
+ *     user can drag the camera on the right half of the screen. The
+ *     offset auto-lerps back to 0 when the finger is released so the
+ *     player never falls off-screen.
  */
 (function (global) {
 
@@ -38,8 +46,10 @@
     scene.background = new THREE.Color(0x07101c);
     scene.fog = new THREE.FogExp2(0x07101c, 0.008);
 
-    const camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 1200);
-    camera.position.set(0, 80, 90);
+    // Closer FOV gives a Pokémon-Unite-style framing (the wide 55° read
+    // top-down; 48° pulls the action in tighter without obvious distortion).
+    const camera = new THREE.PerspectiveCamera(48, w / h, 0.1, 1200);
+    camera.position.set(0, 30, 32);
     camera.lookAt(0, 0, 0);
 
     // Lights (the opal-battlefield module adds its own hemi + sun too;
@@ -50,9 +60,12 @@
     dir.castShadow = false;
     scene.add(dir);
 
-    // Build the arena (GLB battlefield + capture pad + spawn pad overlays).
+    // Build the arena (GLB battlefield + capture pad + spawn portal + tall-grass).
+    let arenaHandle = null;
     try {
-      if (typeof global.buildTerrain === 'function') global.buildTerrain(scene);
+      if (typeof global.buildTerrain === 'function') {
+        arenaHandle = global.buildTerrain(scene);
+      }
     } catch (err) {
       console.warn("[Game] buildTerrain failed:", err);
       const planeGeo = new THREE.PlaneGeometry(180, 100);
@@ -79,6 +92,8 @@
         let best = null, bd = Infinity;
         for (const e of enemies) {
           if (!e.alive) continue;
+          // Skip enemies hiding in grass (Pokémon-Unite hide mechanic).
+          if (typeof world.isHiddenFrom === 'function' && world.isHiddenFrom(e, player)) continue;
           const dd = (e.x - player.x) * (e.x - player.x) + (e.z - player.z) * (e.z - player.z);
           if (dd < bd) { bd = dd; best = e; }
         }
@@ -177,6 +192,11 @@
               global.FamiliarBotGamePerformance._scale) || 1;
     }
 
+    // Pokémon-Unite-style follow offsets. Tweak these together if you want
+    // a different framing — keep CAM_HEIGHT > CAM_BACK for a tilted view.
+    const CAM_HEIGHT = 22;   // world units above the player (× scale)
+    const CAM_BACK   = 18;   // world units behind the player (× scale)
+
     function tick(now) {
       if (stopped) return;
       const dt = Math.min(0.05, (now - lastTs) / 1000);
@@ -186,6 +206,13 @@
         fpsValue = fpsCount / fpsTimer;
         fpsCount = 0; fpsTimer = 0;
         hudHandle.setFps(fpsValue);
+      }
+
+      // Per-frame camera-offset relax (called even when player is dead so
+      // the camera keeps re-centering on the spawn point).
+      if (global.FamiliarBotInput &&
+          typeof global.FamiliarBotInput.update === 'function') {
+        global.FamiliarBotInput.update(dt);
       }
 
       // ---- player input
@@ -224,15 +251,26 @@
       // ---- world tick
       world.update(dt);
 
+      // ---- arena tick (spawn-portal spin, grass sway, GLB animations)
+      if (arenaHandle && typeof arenaHandle.update === 'function') {
+        arenaHandle.update(dt);
+      }
+
       // ---- VFX
       vfx.update(dt);
 
-      // ---- camera follow (top-down with offset) — scales with arena
+      // ---- camera follow — Pokémon-Unite-close, with drag offset.
       const cs = getCamScale();
-      camera.position.x = player.x;
-      camera.position.z = player.z + 55 * cs;
-      camera.position.y = 65 * cs;
-      camera.lookAt(player.x, 0, player.z);
+      const camOff = (global.FamiliarBotInput &&
+                      typeof global.FamiliarBotInput.getCameraOffset === 'function')
+        ? global.FamiliarBotInput.getCameraOffset()
+        : { x: 0, z: 0 };
+      const focusX = player.x + camOff.x;
+      const focusZ = player.z + camOff.z;
+      camera.position.x = focusX;
+      camera.position.z = focusZ + CAM_BACK * cs;
+      camera.position.y = CAM_HEIGHT * cs;
+      camera.lookAt(focusX, 0, focusZ);
 
       // ---- off-camera culling pass (sibling perf module)
       if (global.FamiliarBotGamePerformance &&

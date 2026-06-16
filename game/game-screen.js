@@ -41,6 +41,8 @@
     "./arena/opal-battlefield.js",
     "./arena/capture-points.js",
     "./arena/spawn-pads.js",
+    "./arena/spawn-portals.js",
+    "./arena/tall-grass.js",
     "./arena/index.js"
   ];
 
@@ -68,7 +70,8 @@
   const PATCH_SCRIPTS = [
     "./game-performance.js",
     "./game-visuals.js",
-    "./game-ui-layout.js"
+    "./game-ui-layout.js",
+    "./game-input.js"
   ];
 
   const scriptEl = document.currentScript ||
@@ -206,6 +209,13 @@
     // Apply the new clustered ability layout + mobile-landscape CSS.
     if (window.FamiliarBotGameUiLayout) {
       window.FamiliarBotGameUiLayout.applyToHud(hud, stage);
+    }
+
+    // Multi-touch input (Pokémon-Unite-style joystick + camera drag).
+    // Must run AFTER buildMobaHud so the joystick DOM is available, and
+    // after applyToHud so the layout CSS is in place.
+    if (window.FamiliarBotInput) {
+      window.FamiliarBotInput.attach(hud, stage);
     }
 
     // ---- Hook match end ----
