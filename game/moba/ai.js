@@ -27,6 +27,15 @@
     self.x += dx / d * s;
     self.z += dz / d * s;
     self.facing = Math.atan2(dz, dx);
+    // Solid-arena collision — keep bots out of walls / pillars / towers /
+    // altar / perimeter (same rules as the player). Without this they
+    // walk straight through the geometry.
+    if (typeof global.terrainCollide === 'function') {
+      global.terrainCollide(self, 1.2);
+    } else if (typeof global.clampToArena === 'function') {
+      // Fallback: at least keep them inside the field.
+      global.clampToArena(self);
+    }
     return true;
   }
 
