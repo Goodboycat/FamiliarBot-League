@@ -103,13 +103,104 @@ function computeArenaStats(scene) {
 /**
  * Unified terrain collision — call from movement code (player + AI).
  *
- * Since the procedural mesh modules were removed, only callers that
- * registered collision helpers (e.g. capture-points.js -> collideWithCaptureTowers)
- * contribute here. Movement code keeps clamping to the arena rectangle via
- * clampToArenaRect() below.
+ * Handles ALL solid arena geometry:
+ *   • Capture-point towers (all tiers — base / middle / outer)
+ *   • Inner wall segments (TERRAIN.walls — axis-aligned thick segments)
+ *   • Pillars (TERRAIN.pillars — vertical cylinders)
+ *   • Central altar (TERRAIN.altar — vertical cylinder)
+ *   • Perimeter wall (TERRAIN.fieldW × TERRAIN.fieldD rounded rect)
+ *
+ * Each obstacle pushes `pos` (a {x,z} or THREE.Vector3) out of itself by
+ * the minimum amount needed so that the actor's `radius` no longer overlaps.
+ * Callers should invoke `terrainCollide` AFTER applying their movement
+ * delta and BEFORE writing the position back to the mesh.
  */
 function terrainCollide(pos, radius) {
-  if (typeof collideWithCaptureTowers === 'function') collideWithCaptureTowers(pos, radius);
+  const T = (typeof TERRAIN !== 'undefined') ? TERRAIN : (typeof window !== 'undefined' && window.TERRAIN);
+  if (!T) return;
+  const r = (radius != null) ? radius : 1.2;
+
+  // 1) Capture-point towers — all tiers, not just base.
+  collideWithAllCaptureTowers(pos, r);
+
+  // Legacy helper still exposed for back-compat; it's now redundant with
+  // the all-tier version above, so we skip it to avoid double-pushing.
+
+  // 2) Inner wall segments — each entry is [x1, z1, x2, z2] in world units.
+  //    Treat each wall as a capsule (thick segment) of half-thickness 0.7.
+  const WALL_HALF_T = 0.7;
+  const walls = T.walls || [];
+  for (let i = 0; i < walls.length; i++) {
+    const w = walls[i];
+    pushOutOfSegment(pos, r, w[0], w[1], w[2], w[3], WALL_HALF_T);
+  }
+
+  // 3) Pillars — vertical cylinders, radius ~1.0 world units.
+  const PILLAR_R = 1.0;
+  const pillars = T.pillars || [];
+  for (let i = 0; i < pillars.length; i++) {
+    const p = pillars[i];
+    pushOutOfCircle(pos, r, p[0], p[1], PILLAR_R);
+  }
+
+  // 4) Central altar — vertical cylinder.
+  if (T.altar && T.altar.pos) {
+    const ar = (T.altar.radius != null) ? T.altar.radius : 7.0;
+    pushOutOfCircle(pos, r, T.altar.pos[0], T.altar.pos[1], ar);
+  }
+
+  // 5) Perimeter — keep actor INSIDE the rounded rectangle (this is the
+  //    real "wall hits" boundary; the arena rect clamp below is the same
+  //    operation but expressed as a clamp rather than a push).
+  clampToArenaRect(pos);
+}
+
+// Push `pos` out of a vertical cylinder centered at (cx,cz) with radius `obsR`,
+// inflated by the actor's radius `r`.
+function pushOutOfCircle(pos, r, cx, cz, obsR) {
+  const dx = pos.x - cx, dz = pos.z - cz;
+  const d = Math.hypot(dx, dz);
+  const minD = r + obsR;
+  if (d > 1e-4 && d < minD) {
+    const push = (minD - d);
+    pos.x += (dx / d) * push;
+    pos.z += (dz / d) * push;
+  } else if (d <= 1e-4) {
+    // exactly overlapping centre — nudge along +X
+    pos.x += minD;
+  }
+}
+
+// Push `pos` out of an axis-agnostic thick line segment (capsule).
+function pushOutOfSegment(pos, r, ax, az, bx, bz, halfT) {
+  // Project pos onto the segment AB; clamp t to [0,1]; treat the closest
+  // point on the segment as the centre of a capsule of radius (halfT).
+  const dx = bx - ax, dz = bz - az;
+  const len2 = dx * dx + dz * dz;
+  let t = 0;
+  if (len2 > 1e-6) {
+    t = ((pos.x - ax) * dx + (pos.z - az) * dz) / len2;
+    if (t < 0) t = 0; else if (t > 1) t = 1;
+  }
+  const cx = ax + dx * t;
+  const cz = az + dz * t;
+  pushOutOfCircle(pos, r, cx, cz, halfT);
+}
+
+// All-tier capture-tower collision (base + middle + outer). Tower physical
+// footprint matches the tower cylinder radius declared in capture-points.js:
+//   base   → 1.8, middle → 1.3, outer → 1.0
+function collideWithAllCaptureTowers(pos, radius) {
+  const CPs = (typeof CAPTURE_POINTS !== 'undefined') ? CAPTURE_POINTS
+            : (typeof window !== 'undefined' && window.CAPTURE_POINTS) || [];
+  for (let i = 0; i < CPs.length; i++) {
+    const cp = CPs[i];
+    const tier = cp.tier || 'middle';
+    const towerR = tier === 'base' ? 1.8 : (tier === 'middle' ? 1.3 : 1.0);
+    const cx = (cp.position && cp.position[0]) || 0;
+    const cz = (cp.position && cp.position[1]) || 0;
+    pushOutOfCircle(pos, radius, cx, cz, towerR);
+  }
 }
 
 /**
@@ -133,7 +224,10 @@ function clampToArenaRect(pos) {
 }
 
 if (typeof window !== 'undefined') {
-  window.clampToArena   = clampToArenaRect;
-  window.buildTerrain   = buildTerrain;
-  window.terrainCollide = terrainCollide;
+  window.clampToArena              = clampToArenaRect;
+  window.buildTerrain              = buildTerrain;
+  window.terrainCollide            = terrainCollide;
+  window.collideWithAllCaptureTowers = collideWithAllCaptureTowers;
+  window.pushOutOfCircle           = pushOutOfCircle;
+  window.pushOutOfSegment          = pushOutOfSegment;
 }

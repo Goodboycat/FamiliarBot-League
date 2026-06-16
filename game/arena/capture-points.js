@@ -159,6 +159,15 @@ function buildCapturePoints(scene) {
   pads.instanceColor.needsUpdate    = true;
   towers.instanceColor.needsUpdate  = true;
 
+  // InstancedMesh bounding spheres are derived from the source geometry,
+  // NOT from the per-instance matrices. That means three.js can frustum
+  // cull the whole tower/pad/ring batch as soon as the (origin-centred)
+  // sphere leaves the camera — visually that's the "capture rings &
+  // towers disappear when running across the field" bug. Disable
+  // frustum culling on these batches; the geometry is tiny and the
+  // count is fixed (10), so there's no perf cost.
+  [pads, rings, towers, crowns, orbs].forEach((m) => { m.frustumCulled = false; });
+
   // pads + tower materials need to declare USE_INSTANCING_COLOR
   // (THREE r128 handles this automatically when instanceColor is set on InstancedMesh)
   group.add(pads); group.add(rings); group.add(towers); group.add(crowns); group.add(orbs);

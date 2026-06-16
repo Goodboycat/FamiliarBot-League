@@ -177,9 +177,29 @@
 
         // Best-effort tweaks: make sure materials don't write to depth from
         // the glow rings, and keep emissive intensities sane on mobile.
+        // Static battlefield meshes (floor, perimeter walls, gems, grass
+        // decals, capture rings, spawn rings…) are scaled non-uniformly and
+        // some of them are large flat planes whose three.js auto-computed
+        // bounding sphere ends up under-sized after the scale/parent baking.
+        // That auto frustum cull was the root cause of meshes popping in &
+        // out as the camera moved across the field — three.js was hiding
+        // entire chunks of the arena whenever their (wrong) bounding sphere
+        // fell outside the frustum.
+        //
+        // FIX: turn frustum culling OFF on the static battlefield, and
+        // re-expand each mesh's bounding sphere from the geometry so the
+        // (rare) external culler still does the right thing. Static count
+        // here is small (≈20 unique meshes incl. instanced groups) so the
+        // perf hit is negligible.
         root.traverse((obj) => {
           if (obj.isMesh) {
-            obj.frustumCulled = true;
+            obj.frustumCulled = false;
+            if (obj.geometry) {
+              try {
+                obj.geometry.computeBoundingBox();
+                obj.geometry.computeBoundingSphere();
+              } catch (_e) { /* non-fatal */ }
+            }
             if (obj.material) {
               const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
               mats.forEach((m) => {
@@ -190,6 +210,11 @@
             }
           }
         });
+        // Also force the root group not to be culled. This is belt-and-
+        // braces: three.js culls Groups too when their first child has a
+        // dirty sphere.
+        root.frustumCulled = false;
+        group.frustumCulled = false;
 
         group.add(root);
 
