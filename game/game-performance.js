@@ -179,7 +179,10 @@
     NS._frustum = new THREE.Frustum();
     NS._projMat = new THREE.Matrix4();
     NS._tmpVec  = new THREE.Vector3();
-    NS._tmpSph  = new THREE.Sphere(new THREE.Vector3(), 4); // generous radius
+    // Bot/wild/boss bounding sphere used for the frustum test. Previous
+    // value (4 / 3.5 below) was too tight — actors visibly popped in &
+    // out near the screen edges as the player ran across the field.
+    NS._tmpSph  = new THREE.Sphere(new THREE.Vector3(), 7);
 
     // Convert actor base speeds for the bigger map.
     if (NS._scale && NS._scale !== 1) scaleActorSpeeds(world, NS._scale);
@@ -253,8 +256,12 @@
     NS._frustum.setFromProjectionMatrix(NS._projMat);
 
     function inFrustum(a) {
+      // Generous radius so mech meshes (bots / wilds / bosses) don't pop
+      // in & out at the edges of the screen as the camera moves with the
+      // player. The cost of testing a sphere that's 7 units instead of
+      // 3.5 is negligible — the win is a stable picture during traversal.
       NS._tmpSph.center.set(a.x, 1.5, a.z);
-      NS._tmpSph.radius = 3.5;
+      NS._tmpSph.radius = 7;
       return NS._frustum.intersectsSphere(NS._tmpSph);
     }
     function maybeHide(a, alwaysShow) {
@@ -299,10 +306,10 @@
     (world.wildRobots || []).forEach((a) => maybeHide(a, false));
     (world.bosses     || []).forEach((a) => maybeHide(a, false));
     if (world.megaBoss) {
-      // The mega boss is huge — give it a bigger sphere so it doesn't
-      // pop in/out around the edges of the screen.
+      // The mega boss is huge — give it an even bigger sphere so it never
+      // pops in/out around the edges of the screen.
       NS._tmpSph.center.set(world.megaBoss.x, 4, world.megaBoss.z);
-      NS._tmpSph.radius = 14;
+      NS._tmpSph.radius = 22;
       if (world.megaBoss.mesh) {
         world.megaBoss.mesh.visible =
           world.megaBoss.alive && NS._frustum.intersectsSphere(NS._tmpSph);

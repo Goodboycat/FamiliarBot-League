@@ -221,6 +221,13 @@
         const sp = player.speed;
         player.x += mv.x * sp * dt;
         player.z += mv.y * sp * dt;
+        // Solid-arena collision: push the player out of walls / pillars /
+        // altar / capture-point towers / perimeter. This runs AFTER the
+        // movement delta and BEFORE the mesh is moved so the visual stays
+        // in sync with the simulated body.
+        if (typeof global.terrainCollide === 'function') {
+          global.terrainCollide(player, 1.2);
+        }
         // clamp to arena (dynamic — works with both legacy and scaled fields)
         const c = getArenaClamp();
         player.x = Math.max(-c.hx, Math.min(c.hx, player.x));
