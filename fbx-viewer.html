@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FBX Animation Viewer</title>
+    <link rel="stylesheet" href="./assets/ui/fbx-viewer/fbx-viewer.css">
+  </head>
+  <body>
+    <main class="viewer-app">
+      <aside class="viewer-panel">
+        <header>
+          <p class="kicker">FamiliarBot Tool</p>
+          <h1>FBX Animation Viewer</h1>
+        </header>
+
+        <section class="drop-zone" data-drop-zone>
+          <strong>Drop model and animation files here</strong>
+          <span>Use one model FBX/GLB and one or more animation FBX files.</span>
+        </section>
+
+        <section class="control-group">
+          <label>
+            FamiliarBot robot
+            <select data-robot-select aria-label="FamiliarBot robot"></select>
+          </label>
+          <button type="button" data-load-robot>Load Robot + Animations</button>
+          <label>
+            Character model
+            <input type="file" accept=".fbx,.glb,.gltf" data-model-input>
+          </label>
+          <button type="button" data-load-atlas>Load Atlas Sample</button>
+        </section>
+
+        <section class="control-group">
+          <label>
+            Animations
+            <input type="file" accept=".fbx" multiple data-animation-input>
+          </label>
+          <select data-animation-select aria-label="Animation"></select>
+        </section>
+
+        <section class="control-group">
+          <label>
+            Weapon
+            <select data-weapon-select aria-label="Weapon"></select>
+          </label>
+          <button type="button" data-load-weapon>Load Weapon</button>
+          <label>
+            Power
+            <select data-power-select aria-label="Power animation"></select>
+          </label>
+          <button type="button" data-play-power>Play Power</button>
+        </section>
+
+        <section class="button-grid">
+          <button type="button" data-play>Play</button>
+          <button type="button" data-pause>Pause</button>
+          <button type="button" data-restart>Restart</button>
+          <button type="button" data-clear>Clear</button>
+        </section>
+
+        <section class="readout">
+          <div><strong>Animation</strong><span data-current-animation>None</span></div>
+          <div><strong>Time</strong><span data-time-readout>0.00 / 0.00</span></div>
+          <div><strong>Rig Check</strong><span data-rig-status>No animation loaded</span></div>
+        </section>
+
+        <section class="log" data-log aria-label="Status log"></section>
+      </aside>
+
+      <section class="viewport-wrap">
+        <div class="viewport-toolbar">
+          <span data-status>Ready</span>
+        </div>
+        <div class="viewport" data-viewport></div>
+      </section>
+    </main>
+
+    <script type="module" src="./assets/ui/fbx-viewer/fbx-viewer.js?v=weapons-powers-1"></script>
+  </body>
+</html>

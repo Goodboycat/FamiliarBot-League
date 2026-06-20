@@ -183,6 +183,7 @@ await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });
 
 await copyIfExists(path.join(root, "index.html"), path.join(dist, "index.html"));
+await copyIfExists(path.join(root, "fbx-viewer.html"), path.join(dist, "fbx-viewer.html"));
 await copyIfExists(path.join(root, "LICENSE"), path.join(dist, "LICENSE"));
 await copyIfExists(path.join(root, "game"), path.join(dist, "game"));
 await copyIfExists(path.join(root, "assets", "bots"), path.join(dist, "assets", "bots"));
@@ -199,17 +200,6 @@ for (const largeBackground of [
 await removeFbmFolders(dist);
 
 await removeDuplicateWeaponAnimations(path.join(dist, "assets", "bots"));
-for (const fbxModel of [
-  "assets/bots/atlas/model/atlas_all_rounder.fbx",
-  "assets/bots/blaze/model/blaze_fighter.fbx",
-  "assets/bots/volt/model/volt_speedster.fbx",
-  "assets/bots/sage/model/sage_supporter.fbx",
-  "assets/bots/bastion/model/bastion_tank.fbx",
-  "assets/bots/vex/model/vex_robot_fox.fbx",
-  "assets/bots/bruno/model/bruno_robotic_bear.fbx"
-]) {
-  await rm(path.join(dist, fbxModel), { force: true });
-}
 await rewriteBotJson();
 await rewriteGameManifest();
 await failOnOversizedFiles();

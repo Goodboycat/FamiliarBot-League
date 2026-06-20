@@ -1,6 +1,6 @@
 (function () {
   const DB_NAME = "FamiliarBotAssets";
-  const DB_VERSION = 2;
+  const DB_VERSION = 3;
   const STORE_NAME = "assets";
 
   let dbPromise = null;

@@ -1,3 +1,7 @@
 dist/
 node_modules/
 .wrangler/
+downloads/
+imports/
+__pycache__/
+*.pyc
